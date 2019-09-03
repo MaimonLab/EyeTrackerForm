@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.705
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EyeTrackerForm", "EyeTrackerForm\EyeTrackerForm.csproj", "{F64C5C03-97F1-425E-860C-E6D5CEADB888}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F64C5C03-97F1-425E-860C-E6D5CEADB888}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F64C5C03-97F1-425E-860C-E6D5CEADB888}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F64C5C03-97F1-425E-860C-E6D5CEADB888}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F64C5C03-97F1-425E-860C-E6D5CEADB888}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {473BBF7F-49BC-4924-B9FC-994F7AC45AA9}
+	EndGlobalSection
+EndGlobal
