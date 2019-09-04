@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using SpinnakerNET;
 using SpinnakerNET.GenApi;
+using SpinnakerNET.Video;
+
 using System.Drawing;
 using System.Windows;
 using System.Threading;
@@ -49,15 +51,27 @@ namespace EyeTrackerForm
 
         public event EventHandler<LatencyEventArgs> LatencyEvent;
 
-        //public bool lockTaken = false;
+        // Use the following enum and global static variable to select the type
+        // of video file to be created and saved.
+        enum VideoType
+        {
+            Uncompressed,
+            Mjpg,
+            H264
+        }
 
+       static VideoType chosenFileType = VideoType.Uncompressed;
+
+       IManagedSpinVideo video;
+
+        //public bool lockTaken = false;
 
 
 
         public CameraInstance(IManagedCamera camera, CameraComponent component)
         {
             // Workers
-            
+
             mDisplayQueue = new BlockingCollection<FrameData>();
             mPupilQueue = new BlockingCollection<FrameData>();
             mEventQueue = new BlockingCollection<IManagedImage>();
@@ -89,7 +103,42 @@ namespace EyeTrackerForm
             IBool iChunkEnableFrame = camMap.GetNode<IBool>("ChunkEnable");
             iChunkEnableFrame.Value = true;
 
-            
+//            Change framerate
+            IFloat iAcquisitionFrameRate = camMap.GetNode<IFloat>("AcquisitionFrameRate");
+            iAcquisitionFrameRate.Value = 30.0;
+
+            video = new ManagedSpinVideo();
+
+            video.SetMaximumFileSize(FileMaxSize);
+            float frameRateToSet = 30;
+            string videoFilename = "test_01"
+
+            switch (chosenFileType)
+            {
+                case VideoType.Uncompressed:
+                    AviOption uncompressedOption = new AviOption();
+                    uncompressedOption.frameRate = frameRateToSet;
+                    video.Open(videoFilename, uncompressedOption);
+                    break;
+
+                case VideoType.Mjpg:
+                    MJPGOption mjpgOption = new MJPGOption();
+                    mjpgOption.frameRate = frameRateToSet;
+                    mjpgOption.quality = 75;
+                    video.Open(videoFilename, mjpgOption);
+                    break;
+
+                case VideoType.H264:
+                    H264Option h264Option = new H264Option();
+                    h264Option.frameRate = frameRateToSet;
+                    h264Option.bitrate = 1000000;
+                    h264Option.height = Convert.ToInt32(images[0].Height);
+                    h264Option.width = Convert.ToInt32(images[0].Width);
+                    video.Open(videoFilename, h264Option);
+                    break;
+            }
+
+
 
 
 
@@ -116,14 +165,14 @@ namespace EyeTrackerForm
 
         ~CameraInstance()
         {
-            
-            
+
+
 
         }
 
         public void DoCameraGrab()
         {
-            
+
             while(mStillAlive)
             {
                 try
@@ -191,12 +240,12 @@ namespace EyeTrackerForm
 
             //cvThread.Join();
             //displayThread.Join();
-            
+
         }
 
         public void DoPupilTracking()
         {
-            
+
             double pupx;
             double pupy;
             FrameData thisFrame;
@@ -213,62 +262,21 @@ namespace EyeTrackerForm
                     thisFrame = mPupilQueue.Take();
                     logger.Debug("size of opupil queue is {0}", mPupilQueue.Count);
                     image = thisFrame.Image;
-                    cropImg = image.Copy(new Rectangle(mRoiLeft, mRoiTop, mRoiRight - mRoiLeft, mRoiBottom - mRoiTop));
+
                     if (mRecord)
                     {
 
                         try
                         {
-
-                            blurImag = cropImg.SmoothBlur(5, 5);
-
-                            blurImag._EqualizeHist();
-                            
-                            thresImage = blurImag.ThresholdBinary(new Gray(mThreshold), new Gray(255));
-                            contours = new VectorOfVectorOfPoint();
-
-                            Mat hierarchy = new Mat();
-                            CvInvoke.FindContours(thresImage, contours, hierarchy,
-                                Emgu.CV.CvEnum.RetrType.Tree, Emgu.CV.CvEnum.ChainApproxMethod.ChainApproxSimple);
-
-                            double largest = -1.0;
-                            int largeIndex = -1;
-                            for (int i = 0; i < contours.Size; i++)
-                            {
-                                double tempSize = CvInvoke.ContourArea(contours[i]);
-                                if (tempSize > largest)
-                                {
-                                    largest = tempSize;
-                                    largeIndex = i;
-                                }
-                            }
-
-                            if (largeIndex >= 0)
-                            {
-                                VectorOfPoint workContour = contours[largeIndex];
-
-                                Moments moment = CvInvoke.Moments(workContour);
-
-
-                                pupx = moment.M10 / moment.M00;
-                                pupy = moment.M01 / moment.M00;
-                            }
-                            else
-                            {
-                                pupx = 0;
-                                pupy = 0;
-                            }
-
-
+                            //video recording goes here
+                            video.Append(image);
                         }
                         catch
                         {
                             pupx = 0;
                             pupy = 0;
                         }
-                        float xval = (float)(pupx / (mRoiRight - mRoiLeft)* 10.0);
-                        float yval = (float)(pupy / (mRoiBottom - mRoiTop) * 10.0);
-                        mComponent.FireMcc(this.Xchannel, this.Ychannel, xval, yval);
+
                         LatencyEventArgs latency = new LatencyEventArgs();
 
                         double procTime = HighResolutionDateTime.UtcNow;
@@ -292,18 +300,13 @@ namespace EyeTrackerForm
                     if (mDisplay) //mDisplay
                     {
                         FrameData displayFrame;
-                        if (mFullImage) //mFullImage
-                        {
-                            displayFrame = new FrameData(thisFrame.FameID, thisFrame.Image, Convert.ToInt32(pupx) + mRoiLeft, Convert.ToInt32(pupy) + mRoiTop );
-                        }
-                        else
-                        {
-                            displayFrame = new FrameData(thisFrame.FameID, cropImg, Convert.ToInt32(pupx), Convert.ToInt32(pupy));
-                        }
+
+                        displayFrame = new FrameData(thisFrame.FameID, thisFrame.Image, Convert.ToInt32(pupx) + mRoiLeft, Convert.ToInt32(pupy) + mRoiTop );
+
                         mDisplayQueue.Add(displayFrame);
                     }
 
-                    
+
 
                 }
                 catch(Exception e)
@@ -312,7 +315,7 @@ namespace EyeTrackerForm
                     Thread.Sleep(3);
                 }
 
-                
+
 
 
 
@@ -326,7 +329,7 @@ namespace EyeTrackerForm
 
         public void DoDisplayImage(object img)
         {
-            
+
             FrameData dispFrame;
 
             while (mStillAlive)
@@ -335,57 +338,58 @@ namespace EyeTrackerForm
                 {
                     dispFrame = mDisplayQueue.Take();
                     Image<Gray, Byte> image = dispFrame.Image;
-
-                    var _object = new object();
-                    bool lockTaken = false;
-                    try
+                    if (dispFrame.FameID % 30 == 0)
                     {
-                        logger.Debug("size of display queue is {0}", mDisplayQueue.Count);
-                        Monitor.TryEnter(_object, 5, ref lockTaken);
-
-                        if (lockTaken)
+                        var _object = new object();
+                        bool lockTaken = false;
+                        try
                         {
+                            logger.Debug("size of display queue is {0}", mDisplayQueue.Count);
+                            Monitor.TryEnter(_object, 5, ref lockTaken);
 
-
-
-                            if (mFullImage) //mFullImage
+                            if (lockTaken)
                             {
-                                image.Draw(new Rectangle(mRoiLeft, mRoiTop, mRoiRight - mRoiLeft, mRoiBottom - mRoiTop), new Gray(255), 2);
-                            }
-                            if (mRecord)
-                            {
-                                image.Draw(new CircleF(new PointF(dispFrame.X, dispFrame.Y), 2.0f), new Gray(255), 2);
-                            }
-                            mComponent.HandleDisplayImage(image);
 
-                            if (logger.IsDebugEnabled)
-                            {
-                                logger.Debug("Display Frame {0} at {1}", dispFrame.FameID, HighResolutionDateTime.UtcNow);
+
+
+                                if (mFullImage) //mFullImage
+                                {
+                                    image.Draw(new Rectangle(mRoiLeft, mRoiTop, mRoiRight - mRoiLeft, mRoiBottom - mRoiTop), new Gray(255), 2);
+                                }
+                                // if (mRecord)
+                                // {
+                                //     image.Draw(new CircleF(new PointF(dispFrame.X, dispFrame.Y), 2.0f), new Gray(255), 2);
+                                // }
+                                mComponent.HandleDisplayImage(image);
+
+                                if (logger.IsDebugEnabled)
+                                {
+                                    logger.Debug("Display Frame {0} at {1}", dispFrame.FameID, HighResolutionDateTime.UtcNow);
+                                }
+
                             }
 
+
+                            //mComponent.HandleDisplayImage(workingImage.);
+
+                            else
+                            {
+                                // The lock was not acquired.
+                            }
                         }
-
-
-                        //mComponent.HandleDisplayImage(workingImage.);
-
-                        else
+                        finally
                         {
-                            // The lock was not acquired.
+                            // Ensure that the lock is released.
+                            if (lockTaken)
+                            {
+                                Monitor.Exit(_object);
+                            }
+                            else
+                            {
+                                int thiskldjf = 1;
+                            }
                         }
                     }
-                    finally
-                    {
-                        // Ensure that the lock is released.
-                        if (lockTaken)
-                        {
-                            Monitor.Exit(_object);
-                        }
-                        else
-                        {
-                            int thiskldjf = 1;
-                        }
-                    }
-
                 }
                 catch
                 {
@@ -401,7 +405,7 @@ namespace EyeTrackerForm
         public void TimeModel()
         {
 
-            
+
 
 
             while (mStillAlive)
@@ -472,9 +476,9 @@ namespace EyeTrackerForm
 
         public void DisplayChangeHandler(object sender, System.EventArgs e)
         {
-            
+
         }
-        
+
         public void Close()
         {
             mStillAlive = false;
@@ -495,10 +499,11 @@ namespace EyeTrackerForm
             {
                 mTimeModel.Abort();
             }
+            video.Close();
             mCamera.EndAcquisition();
             mCamera.Dispose();
         }
-    
+
 
     }
 
@@ -517,10 +522,10 @@ namespace EyeTrackerForm
             this.Image = image;
             X = x;
             Y = y;
-            
+
         }
 
-        
+
     }
 
 }
