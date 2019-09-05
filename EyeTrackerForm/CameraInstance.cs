@@ -50,13 +50,12 @@ namespace EyeTrackerForm
         public Thread mEventThread;
         public string serialNumber;
 
-        public string mWatchFile;
+        public string mWatchPath;
         public bool mWatching = false;
         public int mFeedFrameCountDown = 0;
         public float mFrameRate;
         public FileSystemWatcher mWatcher;
 
-        public event EventHandler<LatencyEventArgs> LatencyEvent;
 
         // Use the following enum and global static variable to select the type
         // of video file to be created and saved.
@@ -285,7 +284,6 @@ namespace EyeTrackerForm
                         }
                         else
                         {
-                            int thiskldjf = 1;
                         }
                     }
                     
@@ -412,9 +410,10 @@ namespace EyeTrackerForm
 
                 if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(openFileDialog1.FileName)) // Test result.
                 {
-                    mWatchFile = openFileDialog1.FileName;
+                    mWatchPath = openFileDialog1.FileName;
                     mWatching = true;
-                    Watcher(mWatchFile);
+                    Watcher(mWatchPath);
+                    page.mPathToWatchBox.Text = mWatchPath;
                 }
                 //Console.WriteLine(file); // <-- For debugging use.
             }

@@ -13,7 +13,7 @@ namespace EyeTrackerForm
         public int DEFAULTFEEDVIDLENGTHVALUE = 10;
         public int DEFAULTLEFTVALUE = 10;
         public int DEFAULTRIGHTVALUE = 20;
-        
+
 
 
         public CameraSlider mTimelapseTrackBar;
@@ -23,8 +23,8 @@ namespace EyeTrackerForm
         public CameraSlider mThresholdTrackBar;
         public CheckBox mRecord;
         public CheckBox mFullImage;
-        public Label mLatencyLabel;
-        public Label mLatencyBox;
+        public Label mPathToWatchLabel;
+        public Label mPathToWatchBox;
 
 
         public CameraTabPage() : base() { }
@@ -33,22 +33,22 @@ namespace EyeTrackerForm
         public event EventHandler RecordChange;
         public event EventHandler FullImageChange;
 
-        public void Init ()
+        public void Init()
         {
             mTimelapseTrackBar = MakeTrackBar(CameraSliderType.timelapse);
             mTimelapseTrackBar.SetMax(180);
             mTimelapseTrackBar.SetValue(DEFAULTTIMELAPSEVALUE);
-            
+
 
             mFeedVidLengthTrackBar = MakeTrackBar(CameraSliderType.FeedVidLength);
             mFeedVidLengthTrackBar.SetMax(30);
             mFeedVidLengthTrackBar.SetValue(DEFAULTFEEDVIDLENGTHVALUE);
-            
+
 
             mLeftTrackBar = MakeTrackBar(CameraSliderType.LEFT);
             mLeftTrackBar.SetMax(1279);
             mLeftTrackBar.SetValue(DEFAULTLEFTVALUE);
-            
+
 
             mRightTrackBar = MakeTrackBar(CameraSliderType.RIGHT);
             mRightTrackBar.SetMax(1279);
@@ -57,7 +57,7 @@ namespace EyeTrackerForm
             mThresholdTrackBar = MakeTrackBar(CameraSliderType.THRESHOLD);
             mThresholdTrackBar.SetMax(255);
             mThresholdTrackBar.SetValue(200);
-            
+
             mTimelapseTrackBar.SliderChange += this.TrackChangeHandler;
             mFeedVidLengthTrackBar.SliderChange += this.TrackChangeHandler;
             mLeftTrackBar.SliderChange += this.TrackChangeHandler;
@@ -85,27 +85,29 @@ namespace EyeTrackerForm
             mFullImage.UseVisualStyleBackColor = true;
             mFullImage.Checked = true;
 
-            
+
             mRecord.CheckStateChanged += this.RecordChangeHandler;
             mFullImage.CheckStateChanged += this.FullImageChangeHandler;
 
-            // Latency Box
+            // PathToWatch Box
 
-            mLatencyLabel = new Label();
-            mLatencyLabel.AutoSize = true;
-            mLatencyLabel.Location = new System.Drawing.Point(10, 420);
-            mLatencyLabel.Name = "latency";
-            mLatencyLabel.Size = new System.Drawing.Size(35, 13);
-            mLatencyLabel.TabIndex = 6;
-            mLatencyLabel.Text = "Latency";
+            mPathToWatchLabel = new Label();
+            mPathToWatchLabel.AutoSize = true;
+            mPathToWatchLabel.Location = new System.Drawing.Point(10, 420);
+            mPathToWatchLabel.Name = "PathToWatch";
+            mPathToWatchLabel.Size = new System.Drawing.Size(35, 13);
+            mPathToWatchLabel.TabIndex = 6;
+            mPathToWatchLabel.Text = "PathToWatch:";
 
-            mLatencyBox = new Label();
-            mLatencyBox.AutoSize = true;
-            mLatencyBox.Location = new System.Drawing.Point(55, 420);
-            mLatencyBox.Name = "latencybox";
-            mLatencyBox.Size = new System.Drawing.Size(35, 13);
-            mLatencyBox.TabIndex = 7;
-            mLatencyBox.Text = "0";
+            mPathToWatchBox = new Label();
+            mPathToWatchBox.AutoSize = true;
+            mPathToWatchBox.Location = new System.Drawing.Point(10, 445);
+            mPathToWatchBox.Name = "PathToWatchbox";
+            mPathToWatchBox.Size = new System.Drawing.Size(35, 13);
+            mPathToWatchBox.MaximumSize = new System.Drawing.Size(190, 0);
+            mPathToWatchBox.AutoSize = true;
+            mPathToWatchBox.TabIndex = 7;
+            mPathToWatchBox.Text = "None";
 
 
 
@@ -119,15 +121,15 @@ namespace EyeTrackerForm
             this.Controls.Add(mThresholdTrackBar);
             this.Controls.Add(mRecord);
             this.Controls.Add(mFullImage);
-            this.Controls.Add(mLatencyLabel);
-            this.Controls.Add(mLatencyBox);
+            this.Controls.Add(mPathToWatchLabel);
+            this.Controls.Add(mPathToWatchBox);
 
         }
 
         private CameraSlider MakeTrackBar(CameraSliderType pos)
         {
             CameraSlider newSlider = new CameraSlider(pos);
-            newSlider.Location = new System.Drawing.Point(10, 10 + (int)pos* 65);
+            newSlider.Location = new System.Drawing.Point(10, 10 + (int)pos * 65);
             newSlider.TabIndex = (int)pos;
 
             return newSlider;
@@ -141,7 +143,7 @@ namespace EyeTrackerForm
 
         public void RecordChangeHandler(object sender, System.EventArgs e)
         {
-               
+
             RecordChange(this, new EventArgs());
         }
 
@@ -150,23 +152,10 @@ namespace EyeTrackerForm
             FullImageChange(this, new EventArgs());
         }
 
-        public void HandleLatencyEvent(object sender, LatencyEventArgs e)
-        {
-            if (this.mLatencyBox.InvokeRequired)
-            {
-                this.mLatencyBox.BeginInvoke((MethodInvoker)delegate () { this.mLatencyBox.Text = e.Latency.ToString(); ; });
-            }
-            else
-            {
-                mLatencyBox.Text = e.Latency.ToString();
-            }
-        }
-
-
     }
 
 
-    public  class CameraSlider : Panel
+    public class CameraSlider : Panel
     {
 
         public int SLIDERWIDTH = 150;
@@ -217,19 +206,19 @@ namespace EyeTrackerForm
 
             mTrackbar = new TrackBar();
             mTrackbar.Location = new System.Drawing.Point(SLIDERINITX, SLIDERINITY);
-            mTrackbar.Name = "bar" ;
+            mTrackbar.Name = "bar";
             mTrackbar.Size = new System.Drawing.Size(SLIDERWIDTH, SLIDERHEIGHT);
             mTrackbar.TabIndex = 1;
 
             mValue = new Label();
             mValue.AutoSize = true;
-            mValue.Location = new System.Drawing.Point(SLIDERWIDTH+10, SLIDERINITY);
+            mValue.Location = new System.Drawing.Point(SLIDERWIDTH + 10, SLIDERINITY);
             mValue.Name = "label2";
             mValue.Size = new System.Drawing.Size(35, 13);
             mValue.TabIndex = 2;
             mValue.Text = "";
 
-            this.Size = new System.Drawing.Size(SLIDERWIDTH+40, SLIDERHEIGHT+20);
+            this.Size = new System.Drawing.Size(SLIDERWIDTH + 40, SLIDERHEIGHT + 20);
 
 
             mTrackbar.ValueChanged += this.TrackChangeHandler;
@@ -261,10 +250,10 @@ namespace EyeTrackerForm
             mTrackbar.Maximum = value;
         }
 
-       
+
     }
 
-    
+
 
     public enum CameraSliderType
     {
@@ -274,11 +263,4 @@ namespace EyeTrackerForm
         RIGHT,
         THRESHOLD
     }
-
-    public class LatencyEventArgs : EventArgs
-    {
-        public double Latency { get; set; }
-    }
-
-
 }

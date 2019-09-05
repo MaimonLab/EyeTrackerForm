@@ -47,13 +47,13 @@ namespace EyeTrackerForm
         {
             CameraInstance cam = mCameraComponent.AddCameraInstance(camera);
             
-            string serailNumber = camera.DeviceSerialNumber.ToString();
-            CameraTabPage newTab = new CameraTabPage(serailNumber);
+            string serialNumber = camera.DeviceSerialNumber.ToString();
+            CameraTabPage newTab = new CameraTabPage(serialNumber);
             newTab.Init();
             newTab.ROIChanged += cam.ROIChangeHandler;
             newTab.RecordChange += cam.RecordChangeHandler;
             newTab.FullImageChange += cam.FullImageChangeHandler;
-            cam.LatencyEvent += newTab.HandleLatencyEvent;
+            //cam.LatencyEvent += newTab.HandleLatencyEvent;
             if (FirstCam)
             {
                 cam.Xchannel = 0;
@@ -67,7 +67,7 @@ namespace EyeTrackerForm
                 cam.Ychannel = 3;
             }
 
-            string config = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, serailNumber + ".config");
+            string config = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, serialNumber + ".config");
             if (File.Exists(config))
             {
                 string[] lines = File.ReadAllLines(config);
@@ -131,9 +131,6 @@ namespace EyeTrackerForm
                     item.mDisplay = false;
                 }
             }
-            
-
-            int test = 1;
         }
 
         public void HandleDisplayImage(Emgu.CV.Image<Gray, Byte> image)
