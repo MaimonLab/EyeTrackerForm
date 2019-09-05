@@ -9,8 +9,11 @@ using SpinnakerNET.Video;
 
 using System.Drawing;
 using System.Windows;
+using System.Windows.Forms;
 using System.Threading;
 using System.IO;
+using System.Security.Permissions;
+
 using Emgu.CV;
 using Emgu.Util;
 using Emgu.CV.Structure;
@@ -24,8 +27,8 @@ namespace EyeTrackerForm
         private ImageEventListener mImageEventListener;
         private IManagedCamera mCamera;
         private CameraComponent mComponent;
-        public int mRoiTop = 10;
-        public int mRoiBottom = 20;
+        public int mTimelapseInterval = 15;
+        public int mFeedVidLength = 10;
         public int mRoiLeft = 10;
         public int mRoiRight = 20;
         public int mThreshold = 200;
@@ -40,14 +43,18 @@ namespace EyeTrackerForm
         public long lastCameraTime = 0;
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
         public BlockingCollection<FrameData> mDisplayQueue;
-        public BlockingCollection<FrameData> mPupilQueue;
         public BlockingCollection<IManagedImage> mEventQueue;
         public Thread mTimeModel;
         public Thread mGrabThread;
-        public Thread mPupilProcessThread;
         public Thread mDisplayProcessThread;
         public Thread mEventThread;
         public string serialNumber;
+
+        public string mWatchFile;
+        public bool mWatching = false;
+        public int mFeedFrameCountDown = 0;
+        public float mFrameRate;
+        public FileSystemWatcher mWatcher;
 
         public event EventHandler<LatencyEventArgs> LatencyEvent;
 
@@ -60,9 +67,10 @@ namespace EyeTrackerForm
             H264
         }
 
-       static VideoType chosenFileType = VideoType.Uncompressed;
+        static VideoType mChosenFileType = VideoType.Mjpg;
 
-       IManagedSpinVideo video;
+        IManagedSpinVideo mTimelapseVid;
+        IManagedSpinVideo mFeedingVid;
 
         //public bool lockTaken = false;
 
@@ -73,11 +81,8 @@ namespace EyeTrackerForm
             // Workers
 
             mDisplayQueue = new BlockingCollection<FrameData>();
-            mPupilQueue = new BlockingCollection<FrameData>();
             mEventQueue = new BlockingCollection<IManagedImage>();
-            mPupilProcessThread = new Thread(this.DoPupilTracking);
-            mPupilProcessThread.Priority = ThreadPriority.Highest;
-            mPupilProcessThread.Start();
+          
             mDisplayProcessThread = new Thread(this.DoDisplayImage);
             mDisplayProcessThread.Start();
             //mTimeModel = new Thread(this.HandleImageEvent);
@@ -106,55 +111,55 @@ namespace EyeTrackerForm
 //            Change framerate
             IFloat iAcquisitionFrameRate = camMap.GetNode<IFloat>("AcquisitionFrameRate");
             iAcquisitionFrameRate.Value = 30.0;
+            mFrameRate = (float) iAcquisitionFrameRate.Value;
 
-            video = new ManagedSpinVideo();
+            mTimelapseVid = new ManagedSpinVideo();
+            mTimelapseVid.SetMaximumFileSize(8192);
 
-            video.SetMaximumFileSize(FileMaxSize);
+            mFeedingVid = new ManagedSpinVideo();
+            mFeedingVid.SetMaximumFileSize(8192);
+
+            serialNumber = mCamera.DeviceSerialNumber.ToString();
+
+
             float frameRateToSet = 30;
-            string videoFilename = "test_01"
+            string timelapseFilename = "test_timelapse_01" + serialNumber;
+            string feedFilename = "test_feed" + serialNumber;
 
-            switch (chosenFileType)
+            //timelapseInterval = 15;
+
+            switch (mChosenFileType)
             {
                 case VideoType.Uncompressed:
                     AviOption uncompressedOption = new AviOption();
                     uncompressedOption.frameRate = frameRateToSet;
-                    video.Open(videoFilename, uncompressedOption);
+                    mTimelapseVid.Open(timelapseFilename, uncompressedOption);
+                    mFeedingVid.Open(feedFilename, uncompressedOption);
                     break;
 
                 case VideoType.Mjpg:
                     MJPGOption mjpgOption = new MJPGOption();
                     mjpgOption.frameRate = frameRateToSet;
                     mjpgOption.quality = 75;
-                    video.Open(videoFilename, mjpgOption);
+                    mTimelapseVid.Open(timelapseFilename, mjpgOption);
+                    mFeedingVid.Open(feedFilename, mjpgOption);
                     break;
 
-                case VideoType.H264:
-                    H264Option h264Option = new H264Option();
-                    h264Option.frameRate = frameRateToSet;
-                    h264Option.bitrate = 1000000;
-                    h264Option.height = Convert.ToInt32(images[0].Height);
-                    h264Option.width = Convert.ToInt32(images[0].Width);
-                    video.Open(videoFilename, h264Option);
-                    break;
+                //case VideoType.H264:
+                //    H264Option h264Option = new H264Option();
+                //    h264Option.frameRate = frameRateToSet;
+                //    h264Option.bitrate = 1000000;
+                //    h264Option.height = Convert.ToInt32(image.Height);
+                //    h264Option.width = Convert.ToInt32(image.Width);
+                //    mTimelapseVid.Open(videoFilename, h264Option);
+                //    break;
             }
 
 
-
-
-
-
-
-
-
-            //mImageEventListener = new ImageEventListener(mCamera, this, mEventQueue);
-            //mImageEventListener.NewImageEvent += HandleImageEvent;
-            //mCamera.RegisterEvent(mImageEventListener);
-            //mCamera.ChunkEnable.
             Thread.Sleep(300);
             mTimeModel = new Thread(this.TimeModel);
             mTimeModel.Start();
             //Thread.Sleep(30);
-            serialNumber = mCamera.DeviceSerialNumber.ToString();
             mCamera.BeginAcquisition();
 
         }
@@ -165,8 +170,6 @@ namespace EyeTrackerForm
 
         ~CameraInstance()
         {
-
-
 
         }
 
@@ -189,10 +192,37 @@ namespace EyeTrackerForm
                     }
                     //logger.Debug("size of event queue is {0}", mEventQueue.Count);
                     Image<Gray, Byte> myImage = new Image<Gray, Byte>((int)image.Width, (int)image.Height, (int)image.Stride, image.DataPtr);
-                    FrameData pupilFrame = new FrameData(image.ChunkData.FrameID, myImage);
-                    pupilFrame.ImageTime = imageTime;
+                    FrameData currentFrame = new FrameData(image.ChunkData.FrameID, myImage);
+
+                    currentFrame.ImageTime = imageTime;
+
+                    // If we're recording we'll only display and record the timelapse frame, otherwise we'll display all and record none.
+                   
+                    if (currentFrame.FameID % mTimelapseInterval == 0 || !mRecord)
+                    {
+                        if (mDisplay) //mDisplay
+                        {
+                            FrameData displayFrame;
+                            displayFrame = new FrameData(currentFrame.FameID, currentFrame.Image);
+                            mDisplayQueue.Add(displayFrame);
+                        }
+
+                        if (mRecord)
+                        {
+                            mTimelapseVid.Append(image);
+                        }
+                        
+                    }
+                    
+                    if(mRecord && mFeedFrameCountDown > 0)
+                    {
+                        mFeedingVid.Append(image);
+                        mFeedFrameCountDown--;
+                        Console.WriteLine("writing feed frame");
+                    }
                     image.Dispose();
-                    mPupilQueue.Add(pupilFrame);
+
+                    
                 }
                 catch
                 {
@@ -204,128 +234,7 @@ namespace EyeTrackerForm
 
 
 
-        public void HandleImageEvent()
-        {
-            IManagedImage image;
-            //logger.Debug("image {0} image time is {1}", e.image.ChunkData.CounterValue, e.image.ChunkData.Timestamp);
-            while (mStillAlive)
-            {
-                try
-                {
-                    image = mEventQueue.Take();
-                    logger.Debug("size of event queue is {0}", mEventQueue.Count);
-                    Image<Gray, Byte> myImage = new Image<Gray, Byte>((int)image.Width,(int)image.Height, (int)image.Stride, image.DataPtr);
-                    //CvInvoke.cvCopy(image.DataPtr,)
-                    //Image<Gray, Byte> myImage = new Image<Gray, Byte>(image.bitmap);
-                    //Image<Gray, Byte> myImage2 = new Image<Gray, Byte>(image.bitmap);
-                    //FrameData displayFrame = new FrameData(image.ChunkData.FrameID, myImage);
-                    FrameData pupilFrame = new FrameData(image.ChunkData.FrameID, myImage);
-                    image.Dispose();
-                    //Image<Gray, Byte> myImage = new Image<Gray, Byte>(e.image.bitmap);
-                    //Thread displayThread = new Thread(this.DoDisplayImage);
-                    //displayThread.Start(myImage2);
-
-                    mPupilQueue.Add(pupilFrame);
-                    //mDisplayQueue.Enqueue(displayFrame);
-                }
-                catch
-                {
-                    Thread.Sleep(7);
-                }
-
-            }
-
-            //Thread cvThread = new Thread(this.DoPupilTracking);
-            //cvThread.Start(pupilFrame);
-
-            //cvThread.Join();
-            //displayThread.Join();
-
-        }
-
-        public void DoPupilTracking()
-        {
-
-            double pupx;
-            double pupy;
-            FrameData thisFrame;
-
-            Image<Gray, Byte> thresImage;
-            Image<Gray, Byte> blurImag;
-            Image<Gray, Byte> image;
-            VectorOfVectorOfPoint contours;
-            Image<Gray, Byte> cropImg;
-            while (mStillAlive)
-            {
-                try
-                {
-                    thisFrame = mPupilQueue.Take();
-                    logger.Debug("size of opupil queue is {0}", mPupilQueue.Count);
-                    image = thisFrame.Image;
-
-                    if (mRecord)
-                    {
-
-                        try
-                        {
-                            //video recording goes here
-                            video.Append(image);
-                        }
-                        catch
-                        {
-                            pupx = 0;
-                            pupy = 0;
-                        }
-
-                        LatencyEventArgs latency = new LatencyEventArgs();
-
-                        double procTime = HighResolutionDateTime.UtcNow;
-
-                        latency.Latency = procTime - thisFrame.ImageTime;
-                        LatencyEvent(this, latency);
-
-                        if (logger.IsDebugEnabled)
-                        {
-                            logger.Debug("PupilProc Frame {0} at {1}", thisFrame.FameID, procTime);
-                        }
-                        int testc = 1;
-                    }
-                    else
-                    {
-                        pupx = 0;
-                        pupy = 0;
-
-                    }
-
-                    if (mDisplay) //mDisplay
-                    {
-                        FrameData displayFrame;
-
-                        displayFrame = new FrameData(thisFrame.FameID, thisFrame.Image, Convert.ToInt32(pupx) + mRoiLeft, Convert.ToInt32(pupy) + mRoiTop );
-
-                        mDisplayQueue.Add(displayFrame);
-                    }
-
-
-
-                }
-                catch(Exception e)
-                {
-                    logger.Error("{0} \n{1}", e.Message, e.StackTrace);
-                    Thread.Sleep(3);
-                }
-
-
-
-
-
-            }
-            //Do Image Display
-
-
-
-        }
-
+      
 
         public void DoDisplayImage(object img)
         {
@@ -338,58 +247,48 @@ namespace EyeTrackerForm
                 {
                     dispFrame = mDisplayQueue.Take();
                     Image<Gray, Byte> image = dispFrame.Image;
-                    if (dispFrame.FameID % 30 == 0)
+                    
+                    var _object = new object();
+                    bool lockTaken = false;
+                    try
                     {
-                        var _object = new object();
-                        bool lockTaken = false;
-                        try
+                        logger.Debug("size of display queue is {0}", mDisplayQueue.Count);
+                        Monitor.TryEnter(_object, 5, ref lockTaken);
+
+                        if (lockTaken)
                         {
-                            logger.Debug("size of display queue is {0}", mDisplayQueue.Count);
-                            Monitor.TryEnter(_object, 5, ref lockTaken);
 
-                            if (lockTaken)
+                           
+                            mComponent.HandleDisplayImage(image);
+
+                            if (logger.IsDebugEnabled)
                             {
-
-
-
-                                if (mFullImage) //mFullImage
-                                {
-                                    image.Draw(new Rectangle(mRoiLeft, mRoiTop, mRoiRight - mRoiLeft, mRoiBottom - mRoiTop), new Gray(255), 2);
-                                }
-                                // if (mRecord)
-                                // {
-                                //     image.Draw(new CircleF(new PointF(dispFrame.X, dispFrame.Y), 2.0f), new Gray(255), 2);
-                                // }
-                                mComponent.HandleDisplayImage(image);
-
-                                if (logger.IsDebugEnabled)
-                                {
-                                    logger.Debug("Display Frame {0} at {1}", dispFrame.FameID, HighResolutionDateTime.UtcNow);
-                                }
-
+                                logger.Debug("Display Frame {0} at {1}", dispFrame.FameID, HighResolutionDateTime.UtcNow);
                             }
 
-
-                            //mComponent.HandleDisplayImage(workingImage.);
-
-                            else
-                            {
-                                // The lock was not acquired.
-                            }
                         }
-                        finally
+
+
+                        //mComponent.HandleDisplayImage(workingImage.);
+
+                        else
                         {
-                            // Ensure that the lock is released.
-                            if (lockTaken)
-                            {
-                                Monitor.Exit(_object);
-                            }
-                            else
-                            {
-                                int thiskldjf = 1;
-                            }
+                            // The lock was not acquired.
                         }
                     }
+                    finally
+                    {
+                        // Ensure that the lock is released.
+                        if (lockTaken)
+                        {
+                            Monitor.Exit(_object);
+                        }
+                        else
+                        {
+                            int thiskldjf = 1;
+                        }
+                    }
+                    
                 }
                 catch
                 {
@@ -443,15 +342,55 @@ namespace EyeTrackerForm
         public double ConverTime (long camTime)
         {
             return (((camTime - lastCameraTime) / cam2sys)+ lastSystemTime);
+            
+        }
+
+        [PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
+        public void Watcher(string filename)
+        {
+            mWatcher = new FileSystemWatcher();
+            
+            mWatcher.Path = Path.GetDirectoryName(filename);
+            Console.WriteLine("starting watching with path {0}", mWatcher.Path);
+
+            // Watch for changes in LastAccess and LastWrite times, and
+            // the renaming of files or directories.
+            mWatcher.NotifyFilter = NotifyFilters.LastAccess
+                                    | NotifyFilters.LastWrite
+                                    | NotifyFilters.FileName
+                                    | NotifyFilters.DirectoryName;
+
+            // Only watch text files.
+            mWatcher.Filter = "*.csv";
+
+            // Add event handlers.
+            mWatcher.Changed += OnChanged;
+            mWatcher.Created += OnChanged;
+            mWatcher.Deleted += OnChanged;
+
+            // Begin watching.
+            mWatcher.EnableRaisingEvents = true;
         }
 
 
 
+
+        // Define the event handlers.
+        public  void OnChanged(object source, FileSystemEventArgs e)
+        {
+            // Specify what is done when a file is changed, created, or deleted.
+            //Console.WriteLine($"File: {e.FullPath} {e.ChangeType}");
+            mFeedFrameCountDown = (int)Math.Round( mFrameRate * mFeedVidLength);
+            Console.WriteLine("starting feeding video save for {0} frames", mFeedFrameCountDown);
+
+
+        }
+
         public void ROIChangeHandler(object sender, System.EventArgs e)
         {
             CameraTabPage page = (CameraTabPage)sender;
-            mRoiTop = page.mTopTrackBar.mTrackbar.Value;
-            mRoiBottom = page.mBottomTrackBar.mTrackbar.Value;
+            mTimelapseInterval = page.mTimelapseTrackBar.mTrackbar.Value;
+            mFeedVidLength = page.mFeedVidLengthTrackBar.mTrackbar.Value;
             mRoiLeft = page.mLeftTrackBar.mTrackbar.Value;
             mRoiRight = page.mRightTrackBar.mTrackbar.Value;
             mThreshold = page.mThresholdTrackBar.mTrackbar.Value;
@@ -463,8 +402,21 @@ namespace EyeTrackerForm
             mRecord = page.mRecord.Checked;
             if (mRecord)
             {
-                logger.Info("Pupil recodings stared on camera {5} with the following TOP, BOTTOM, LEFT, RIGHT, THRESHOLD values: {0}, {1}, {2}, {3}, {4}",
-                    mRoiTop, mRoiBottom, mRoiLeft, mRoiRight, mThreshold, mCamera.DeviceSerialNumber.ToString());
+                logger.Info("Pupil recodings stared on camera {5} with the following timelapse, BOTTOM, LEFT, RIGHT, THRESHOLD values: {0}, {1}, {2}, {3}, {4}",
+                    mTimelapseInterval, mFeedVidLength, mRoiLeft, mRoiRight, mThreshold, mCamera.DeviceSerialNumber.ToString());
+
+                OpenFileDialog openFileDialog1 = new OpenFileDialog();
+                openFileDialog1.InitialDirectory = "C:\\Users\\maimon\\Documents\\MATLAB\\experiment_outputs";
+
+                DialogResult result = openFileDialog1.ShowDialog();
+
+                if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(openFileDialog1.FileName)) // Test result.
+                {
+                    mWatchFile = openFileDialog1.FileName;
+                    mWatching = true;
+                    Watcher(mWatchFile);
+                }
+                //Console.WriteLine(file); // <-- For debugging use.
             }
         }
 
@@ -487,10 +439,7 @@ namespace EyeTrackerForm
             {
                 mGrabThread.Abort();
             }
-            if (mPupilProcessThread.IsAlive)
-            {
-                mPupilProcessThread.Abort();
-            }
+           
             if (mDisplayProcessThread.IsAlive)
             {
                 mDisplayProcessThread.Abort();
@@ -499,7 +448,10 @@ namespace EyeTrackerForm
             {
                 mTimeModel.Abort();
             }
-            video.Close();
+
+            mTimelapseVid.Close();
+            mFeedingVid.Close();
+
             mCamera.EndAcquisition();
             mCamera.Dispose();
         }
@@ -512,16 +464,16 @@ namespace EyeTrackerForm
         public long FameID { get; set; }
         public Image<Gray, Byte> Image { get; set; }
         public double ImageTime { get; set; }
-        public int X;
-        public int Y;
+
         public FrameData() { }
 
-        public FrameData(long frameId, Image<Gray, Byte> image, int x = 0, int y=0)
+
+        public FrameData(long frameId, Image<Gray, Byte> image)
         {
             this.FameID = frameId;
             this.Image = image;
-            X = x;
-            Y = y;
+            //this.IImage = iimage;
+
 
         }
 

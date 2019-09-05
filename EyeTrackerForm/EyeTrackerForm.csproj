@@ -74,6 +74,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\Program Files\Point Grey Research\Spinnaker\bin64\vs2015\SpinnakerNET_v140.dll</HintPath>
     </Reference>
+    <Reference Include="SpinVideoNET_v140, Version=1.11.0.0, Culture=neutral, PublicKeyToken=fbb20ab7aabaf968, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Program Files\Point Grey Research\Spinnaker\bin64\vs2015\SpinVideoNET_v140.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />

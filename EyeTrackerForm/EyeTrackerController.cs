@@ -71,8 +71,8 @@ namespace EyeTrackerForm
             if (File.Exists(config))
             {
                 string[] lines = File.ReadAllLines(config);
-                newTab.mTopTrackBar.mTrackbar.Value = Int32.Parse(lines[0].Split(' ')[1]);
-                newTab.mBottomTrackBar.mTrackbar.Value = Int32.Parse(lines[1].Split(' ')[1]);
+                newTab.mTimelapseTrackBar.mTrackbar.Value = Int32.Parse(lines[0].Split(' ')[1]);
+                newTab.mFeedVidLengthTrackBar.mTrackbar.Value = Int32.Parse(lines[1].Split(' ')[1]);
                 newTab.mLeftTrackBar.mTrackbar.Value = Int32.Parse(lines[2].Split(' ')[1]);
                 newTab.mRightTrackBar.mTrackbar.Value = Int32.Parse(lines[3].Split(' ')[1]);
                 newTab.mThresholdTrackBar.mTrackbar.Value = Int32.Parse(lines[4].Split(' ')[1]);

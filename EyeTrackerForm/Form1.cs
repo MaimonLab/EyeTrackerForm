@@ -66,8 +66,8 @@ namespace EyeTrackerForm
             System.IO.File.WriteAllLines(
                 System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, thisPage.Text + ".config"),
                 new string[]{
-                    "Top: " + thisPage.mTopTrackBar.mTrackbar.Value.ToString(),
-                    "Bottom: " + thisPage.mBottomTrackBar.mTrackbar.Value.ToString(),
+                    "Timelapse interval: " + thisPage.mTimelapseTrackBar.mTrackbar.Value.ToString(),
+                    "Feeding Video Length: " + thisPage.mFeedVidLengthTrackBar.mTrackbar.Value.ToString(),
                     "Left: " + thisPage.mLeftTrackBar.mTrackbar.Value.ToString(),
                     "Right: " + thisPage.mRightTrackBar.mTrackbar.Value.ToString(),
                     "Threshold: " + thisPage.mThresholdTrackBar.mTrackbar.Value.ToString()

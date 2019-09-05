@@ -9,15 +9,15 @@ namespace EyeTrackerForm
 {
     public class CameraTabPage : TabPage
     {
-        public int DEFAULTTOPVALUE = 10;
-        public int DEFAULTBOTTOMVALUE = 20;
+        public int DEFAULTTIMELAPSEVALUE = 15;
+        public int DEFAULTFEEDVIDLENGTHVALUE = 10;
         public int DEFAULTLEFTVALUE = 10;
         public int DEFAULTRIGHTVALUE = 20;
         
 
 
-        public CameraSlider mTopTrackBar;
-        public CameraSlider mBottomTrackBar;
+        public CameraSlider mTimelapseTrackBar;
+        public CameraSlider mFeedVidLengthTrackBar;
         public CameraSlider mLeftTrackBar;
         public CameraSlider mRightTrackBar;
         public CameraSlider mThresholdTrackBar;
@@ -35,14 +35,14 @@ namespace EyeTrackerForm
 
         public void Init ()
         {
-            mTopTrackBar = MakeTrackBar(CameraSliderType.TOP);
-            mTopTrackBar.SetMax(1023);
-            mTopTrackBar.SetValue(DEFAULTTOPVALUE);
+            mTimelapseTrackBar = MakeTrackBar(CameraSliderType.timelapse);
+            mTimelapseTrackBar.SetMax(180);
+            mTimelapseTrackBar.SetValue(DEFAULTTIMELAPSEVALUE);
             
 
-            mBottomTrackBar = MakeTrackBar(CameraSliderType.BOTTOM);
-            mBottomTrackBar.SetMax(1023);
-            mBottomTrackBar.SetValue(DEFAULTBOTTOMVALUE);
+            mFeedVidLengthTrackBar = MakeTrackBar(CameraSliderType.FeedVidLength);
+            mFeedVidLengthTrackBar.SetMax(30);
+            mFeedVidLengthTrackBar.SetValue(DEFAULTFEEDVIDLENGTHVALUE);
             
 
             mLeftTrackBar = MakeTrackBar(CameraSliderType.LEFT);
@@ -58,8 +58,8 @@ namespace EyeTrackerForm
             mThresholdTrackBar.SetMax(255);
             mThresholdTrackBar.SetValue(200);
             
-            mTopTrackBar.SliderChange += this.TrackChangeHandler;
-            mBottomTrackBar.SliderChange += this.TrackChangeHandler;
+            mTimelapseTrackBar.SliderChange += this.TrackChangeHandler;
+            mFeedVidLengthTrackBar.SliderChange += this.TrackChangeHandler;
             mLeftTrackBar.SliderChange += this.TrackChangeHandler;
             mRightTrackBar.SliderChange += this.TrackChangeHandler;
             mThresholdTrackBar.SliderChange += this.TrackChangeHandler;
@@ -112,8 +112,8 @@ namespace EyeTrackerForm
 
 
 
-            this.Controls.Add(mTopTrackBar);
-            this.Controls.Add(mBottomTrackBar);
+            this.Controls.Add(mTimelapseTrackBar);
+            this.Controls.Add(mFeedVidLengthTrackBar);
             this.Controls.Add(mLeftTrackBar);
             this.Controls.Add(mRightTrackBar);
             this.Controls.Add(mThresholdTrackBar);
@@ -141,6 +141,7 @@ namespace EyeTrackerForm
 
         public void RecordChangeHandler(object sender, System.EventArgs e)
         {
+               
             RecordChange(this, new EventArgs());
         }
 
@@ -192,11 +193,11 @@ namespace EyeTrackerForm
             string name;
             switch (label)
             {
-                case CameraSliderType.TOP:
-                    name = "Top";
+                case CameraSliderType.timelapse:
+                    name = "Timelapse frame interval";
                     break;
-                case CameraSliderType.BOTTOM:
-                    name = "Bottom";
+                case CameraSliderType.FeedVidLength:
+                    name = "FeedVidLength";
                     break;
                 case CameraSliderType.LEFT:
                     name = "Left";
@@ -267,8 +268,8 @@ namespace EyeTrackerForm
 
     public enum CameraSliderType
     {
-        TOP,
-        BOTTOM,
+        timelapse,
+        FeedVidLength,
         LEFT,
         RIGHT,
         THRESHOLD
