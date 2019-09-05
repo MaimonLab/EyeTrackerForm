@@ -18,9 +18,7 @@ namespace EyeTrackerForm
 
         public CameraSlider mTimelapseTrackBar;
         public CameraSlider mFeedVidLengthTrackBar;
-        public CameraSlider mLeftTrackBar;
-        public CameraSlider mRightTrackBar;
-        public CameraSlider mThresholdTrackBar;
+
         public CheckBox mRecord;
         public CheckBox mFullImage;
         public Label mPathToWatchLabel;
@@ -45,25 +43,10 @@ namespace EyeTrackerForm
             mFeedVidLengthTrackBar.SetValue(DEFAULTFEEDVIDLENGTHVALUE);
 
 
-            mLeftTrackBar = MakeTrackBar(CameraSliderType.LEFT);
-            mLeftTrackBar.SetMax(1279);
-            mLeftTrackBar.SetValue(DEFAULTLEFTVALUE);
-
-
-            mRightTrackBar = MakeTrackBar(CameraSliderType.RIGHT);
-            mRightTrackBar.SetMax(1279);
-            mRightTrackBar.SetValue(DEFAULTRIGHTVALUE);
-
-            mThresholdTrackBar = MakeTrackBar(CameraSliderType.THRESHOLD);
-            mThresholdTrackBar.SetMax(255);
-            mThresholdTrackBar.SetValue(200);
 
             mTimelapseTrackBar.SliderChange += this.TrackChangeHandler;
             mFeedVidLengthTrackBar.SliderChange += this.TrackChangeHandler;
-            mLeftTrackBar.SliderChange += this.TrackChangeHandler;
-            mRightTrackBar.SliderChange += this.TrackChangeHandler;
-            mThresholdTrackBar.SliderChange += this.TrackChangeHandler;
-
+          
 
             // Check Boxes
             mRecord = new CheckBox();
@@ -116,9 +99,7 @@ namespace EyeTrackerForm
 
             this.Controls.Add(mTimelapseTrackBar);
             this.Controls.Add(mFeedVidLengthTrackBar);
-            this.Controls.Add(mLeftTrackBar);
-            this.Controls.Add(mRightTrackBar);
-            this.Controls.Add(mThresholdTrackBar);
+
             this.Controls.Add(mRecord);
             this.Controls.Add(mFullImage);
             this.Controls.Add(mPathToWatchLabel);
@@ -188,15 +169,6 @@ namespace EyeTrackerForm
                 case CameraSliderType.FeedVidLength:
                     name = "FeedVidLength";
                     break;
-                case CameraSliderType.LEFT:
-                    name = "Left";
-                    break;
-                case CameraSliderType.RIGHT:
-                    name = "Right";
-                    break;
-                case CameraSliderType.THRESHOLD:
-                    name = "Threshold";
-                    break;
                 default:
                     name = "";
                     break;
@@ -258,9 +230,6 @@ namespace EyeTrackerForm
     public enum CameraSliderType
     {
         timelapse,
-        FeedVidLength,
-        LEFT,
-        RIGHT,
-        THRESHOLD
+        FeedVidLength
     }
 }

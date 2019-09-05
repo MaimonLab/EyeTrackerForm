@@ -67,10 +67,7 @@ namespace EyeTrackerForm
                 System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, thisPage.Text + ".config"),
                 new string[]{
                     "Timelapse interval: " + thisPage.mTimelapseTrackBar.mTrackbar.Value.ToString(),
-                    "Feeding Video Length: " + thisPage.mFeedVidLengthTrackBar.mTrackbar.Value.ToString(),
-                    "Left: " + thisPage.mLeftTrackBar.mTrackbar.Value.ToString(),
-                    "Right: " + thisPage.mRightTrackBar.mTrackbar.Value.ToString(),
-                    "Threshold: " + thisPage.mThresholdTrackBar.mTrackbar.Value.ToString()
+                    "Feeding Video Length: " + thisPage.mFeedVidLengthTrackBar.mTrackbar.Value.ToString()
                 });
         }
     }

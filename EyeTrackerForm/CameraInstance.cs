@@ -29,9 +29,7 @@ namespace EyeTrackerForm
         private CameraComponent mComponent;
         public int mTimelapseInterval = 15;
         public int mFeedVidLength = 10;
-        public int mRoiLeft = 10;
-        public int mRoiRight = 20;
-        public int mThreshold = 200;
+
         public bool mFullImage = true;
         public bool mRecord;
         public bool mDisplay;
@@ -217,7 +215,6 @@ namespace EyeTrackerForm
                     {
                         mFeedingVid.Append(image);
                         mFeedFrameCountDown--;
-                        Console.WriteLine("writing feed frame");
                     }
                     image.Dispose();
 
@@ -349,7 +346,7 @@ namespace EyeTrackerForm
             mWatcher = new FileSystemWatcher();
             
             mWatcher.Path = Path.GetDirectoryName(filename);
-            Console.WriteLine("starting watching with path {0}", mWatcher.Path);
+            logger.Info("starting watching with path {0}", mWatcher.Path);
 
             // Watch for changes in LastAccess and LastWrite times, and
             // the renaming of files or directories.
@@ -379,7 +376,7 @@ namespace EyeTrackerForm
             // Specify what is done when a file is changed, created, or deleted.
             //Console.WriteLine($"File: {e.FullPath} {e.ChangeType}");
             mFeedFrameCountDown = (int)Math.Round( mFrameRate * mFeedVidLength);
-            Console.WriteLine("starting feeding video save for {0} frames", mFeedFrameCountDown);
+            logger.Info("starting feeding video save for {0} frames", mFeedFrameCountDown);
 
 
         }
@@ -389,9 +386,7 @@ namespace EyeTrackerForm
             CameraTabPage page = (CameraTabPage)sender;
             mTimelapseInterval = page.mTimelapseTrackBar.mTrackbar.Value;
             mFeedVidLength = page.mFeedVidLengthTrackBar.mTrackbar.Value;
-            mRoiLeft = page.mLeftTrackBar.mTrackbar.Value;
-            mRoiRight = page.mRightTrackBar.mTrackbar.Value;
-            mThreshold = page.mThresholdTrackBar.mTrackbar.Value;
+
         }
 
         public void RecordChangeHandler(object sender, System.EventArgs e)
@@ -400,9 +395,7 @@ namespace EyeTrackerForm
             mRecord = page.mRecord.Checked;
             if (mRecord)
             {
-                logger.Info("Pupil recodings stared on camera {5} with the following timelapse, BOTTOM, LEFT, RIGHT, THRESHOLD values: {0}, {1}, {2}, {3}, {4}",
-                    mTimelapseInterval, mFeedVidLength, mRoiLeft, mRoiRight, mThreshold, mCamera.DeviceSerialNumber.ToString());
-
+                
                 OpenFileDialog openFileDialog1 = new OpenFileDialog();
                 openFileDialog1.InitialDirectory = "C:\\Users\\maimon\\Documents\\MATLAB\\experiment_outputs";
 
@@ -415,7 +408,10 @@ namespace EyeTrackerForm
                     Watcher(mWatchPath);
                     page.mPathToWatchBox.Text = mWatchPath;
                 }
-                //Console.WriteLine(file); // <-- For debugging use.
+
+                logger.Info("Recording started on camera {3} with the following timelapse interval, feedvideoLength, and watchpath: {0}, {1}, {2}",
+                    mTimelapseInterval, mFeedVidLength, mWatchPath, mCamera.DeviceSerialNumber.ToString());
+
             }
         }
 
