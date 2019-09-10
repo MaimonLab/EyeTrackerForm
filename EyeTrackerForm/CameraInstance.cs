@@ -48,6 +48,7 @@ namespace EyeTrackerForm
         public Thread mEventThread;
         public string serialNumber;
 
+        
         public string mWatchPath;
         public bool mWatching = false;
         public int mFeedFrameCountDown = 0;
@@ -118,41 +119,7 @@ namespace EyeTrackerForm
 
             serialNumber = mCamera.DeviceSerialNumber.ToString();
 
-
-            float frameRateToSet = 30;
-            string timelapseFilename = "test_timelapse_01" + serialNumber;
-            string feedFilename = "test_feed" + serialNumber;
-
-            //timelapseInterval = 15;
-
-            switch (mChosenFileType)
-            {
-                case VideoType.Uncompressed:
-                    AviOption uncompressedOption = new AviOption();
-                    uncompressedOption.frameRate = frameRateToSet;
-                    mTimelapseVid.Open(timelapseFilename, uncompressedOption);
-                    mFeedingVid.Open(feedFilename, uncompressedOption);
-                    break;
-
-                case VideoType.Mjpg:
-                    MJPGOption mjpgOption = new MJPGOption();
-                    mjpgOption.frameRate = frameRateToSet;
-                    mjpgOption.quality = 75;
-                    mTimelapseVid.Open(timelapseFilename, mjpgOption);
-                    mFeedingVid.Open(feedFilename, mjpgOption);
-                    break;
-
-                //case VideoType.H264:
-                //    H264Option h264Option = new H264Option();
-                //    h264Option.frameRate = frameRateToSet;
-                //    h264Option.bitrate = 1000000;
-                //    h264Option.height = Convert.ToInt32(image.Height);
-                //    h264Option.width = Convert.ToInt32(image.Width);
-                //    mTimelapseVid.Open(videoFilename, h264Option);
-                //    break;
-            }
-
-
+                        
             Thread.Sleep(300);
             mTimeModel = new Thread(this.TimeModel);
             mTimeModel.Start();
@@ -210,7 +177,7 @@ namespace EyeTrackerForm
                         }
                         
                     }
-                    
+                    //if we're recording and there is a mFeedFrameCountdown, record every frame until we've gone through that countdown.
                     if(mRecord && mFeedFrameCountDown > 0)
                     {
                         mFeedingVid.Append(image);
@@ -339,13 +306,13 @@ namespace EyeTrackerForm
             return (((camTime - lastCameraTime) / cam2sys)+ lastSystemTime);
             
         }
-
+        //Starts  filesystem watching at the chosen path to trigger feeding recordings.
         [PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
-        public void Watcher(string filename)
+        public void Watcher(string watchpath)
         {
             mWatcher = new FileSystemWatcher();
-            
-            mWatcher.Path = Path.GetDirectoryName(filename);
+
+            mWatcher.Path = watchpath;
             logger.Info("starting watching with path {0}", mWatcher.Path);
 
             // Watch for changes in LastAccess and LastWrite times, and
@@ -355,7 +322,7 @@ namespace EyeTrackerForm
                                     | NotifyFilters.FileName
                                     | NotifyFilters.DirectoryName;
 
-            // Only watch text files.
+            // Only watch csv files.
             mWatcher.Filter = "*.csv";
 
             // Add event handlers.
@@ -403,14 +370,52 @@ namespace EyeTrackerForm
 
                 if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(openFileDialog1.FileName)) // Test result.
                 {
-                    mWatchPath = openFileDialog1.FileName;
+                    string filename = openFileDialog1.FileName;
+                    mWatchPath = Path.GetDirectoryName(filename);
                     mWatching = true;
                     Watcher(mWatchPath);
+                
                     page.mPathToWatchBox.Text = mWatchPath;
                 }
 
                 logger.Info("Recording started on camera {3} with the following timelapse interval, feedvideoLength, and watchpath: {0}, {1}, {2}",
                     mTimelapseInterval, mFeedVidLength, mWatchPath, mCamera.DeviceSerialNumber.ToString());
+
+                string homePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                string rigLable = mWatchPath.Split(Path.DirectorySeparatorChar).Last();
+
+                string vidpath = Path.Combine(homePath, "flyVideos", rigLable);
+
+                string timelapseFilename = vidpath +Path.DirectorySeparatorChar +  "timelapse_" + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss") ;
+                string feedFilename = vidpath + Path.DirectorySeparatorChar + "feeding_" + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss");
+
+                switch (mChosenFileType)
+                {
+                    case VideoType.Uncompressed:
+                        AviOption uncompressedOption = new AviOption();
+                        uncompressedOption.frameRate = mFrameRate;
+                        mTimelapseVid.Open(timelapseFilename, uncompressedOption);
+                        mFeedingVid.Open(feedFilename, uncompressedOption);
+                        break;
+
+                    case VideoType.Mjpg:
+                        MJPGOption mjpgOption = new MJPGOption();
+                        mjpgOption.frameRate = mFrameRate;
+                        mjpgOption.quality = 75;
+                        mTimelapseVid.Open(timelapseFilename, mjpgOption);
+                        mFeedingVid.Open(feedFilename, mjpgOption);
+                        break;
+
+                        //case VideoType.H264:
+                        //    H264Option h264Option = new H264Option();
+                        //    h264Option.frameRate = frameRateToSet;
+                        //    h264Option.bitrate = 1000000;
+                        //    h264Option.height = Convert.ToInt32(image.Height);
+                        //    h264Option.width = Convert.ToInt32(image.Width);
+                        //    mTimelapseVid.Open(videoFilename, h264Option);
+                        //    break;
+                }
+
 
             }
         }
