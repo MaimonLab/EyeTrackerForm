@@ -362,7 +362,7 @@ namespace EyeTrackerForm
             mRecord = page.mRecord.Checked;
             if (mRecord)
             {
-                
+
                 OpenFileDialog openFileDialog1 = new OpenFileDialog();
                 openFileDialog1.InitialDirectory = "C:\\Users\\maimon\\Documents\\MATLAB\\experiment_outputs";
 
@@ -374,7 +374,7 @@ namespace EyeTrackerForm
                     mWatchPath = Path.GetDirectoryName(filename);
                     mWatching = true;
                     Watcher(mWatchPath);
-                
+
                     page.mPathToWatchBox.Text = mWatchPath;
                 }
 
@@ -386,7 +386,7 @@ namespace EyeTrackerForm
 
                 string vidpath = Path.Combine(homePath, "flyVideos", rigLable);
 
-                string timelapseFilename = vidpath +Path.DirectorySeparatorChar +  "timelapse_" + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss") ;
+                string timelapseFilename = vidpath + Path.DirectorySeparatorChar + "timelapse_" + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss");
                 string feedFilename = vidpath + Path.DirectorySeparatorChar + "feeding_" + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss");
 
                 switch (mChosenFileType)
@@ -417,6 +417,11 @@ namespace EyeTrackerForm
                 }
 
 
+            }
+            else
+            {
+                mTimelapseVid.Close();
+                mFeedingVid.Close();
             }
         }
 
