@@ -48,7 +48,7 @@ namespace EyeTrackerForm
         public Thread mEventThread;
         public string serialNumber;
 
-        
+
         public string mWatchPath;
         public bool mWatching = false;
         public int mFeedFrameCountDown = 0;
@@ -67,6 +67,7 @@ namespace EyeTrackerForm
 
         static VideoType mChosenFileType = VideoType.Mjpg;
 
+// TODO: change to an OpenCV or ffmpeg based recorder to allow manipulation / saving timestampps.
         IManagedSpinVideo mTimelapseVid;
         IManagedSpinVideo mFeedingVid;
 
@@ -80,7 +81,7 @@ namespace EyeTrackerForm
 
             mDisplayQueue = new BlockingCollection<FrameData>();
             mEventQueue = new BlockingCollection<IManagedImage>();
-          
+
             mDisplayProcessThread = new Thread(this.DoDisplayImage);
             mDisplayProcessThread.Start();
             //mTimeModel = new Thread(this.HandleImageEvent);
@@ -107,6 +108,7 @@ namespace EyeTrackerForm
             iChunkEnableFrame.Value = true;
 
 //            Change framerate
+// fixme: crashes if camera is not framerate settable. Check if stetable and change if not.
             IFloat iAcquisitionFrameRate = camMap.GetNode<IFloat>("AcquisitionFrameRate");
             iAcquisitionFrameRate.Value = 30.0;
             mFrameRate = (float) iAcquisitionFrameRate.Value;
@@ -119,7 +121,7 @@ namespace EyeTrackerForm
 
             serialNumber = mCamera.DeviceSerialNumber.ToString();
 
-                        
+
             Thread.Sleep(300);
             mTimeModel = new Thread(this.TimeModel);
             mTimeModel.Start();
@@ -161,7 +163,7 @@ namespace EyeTrackerForm
                     currentFrame.ImageTime = imageTime;
 
                     // If we're recording we'll only display and record the timelapse frame, otherwise we'll display all and record none.
-                   
+
                     if (currentFrame.FameID % mTimelapseInterval == 0 || !mRecord)
                     {
                         if (mDisplay) //mDisplay
@@ -175,7 +177,7 @@ namespace EyeTrackerForm
                         {
                             mTimelapseVid.Append(image);
                         }
-                        
+
                     }
                     //if we're recording and there is a mFeedFrameCountdown, record every frame until we've gone through that countdown.
                     if(mRecord && mFeedFrameCountDown > 0)
@@ -185,7 +187,7 @@ namespace EyeTrackerForm
                     }
                     image.Dispose();
 
-                    
+
                 }
                 catch
                 {
@@ -197,7 +199,7 @@ namespace EyeTrackerForm
 
 
 
-      
+
 
         public void DoDisplayImage(object img)
         {
@@ -210,7 +212,7 @@ namespace EyeTrackerForm
                 {
                     dispFrame = mDisplayQueue.Take();
                     Image<Gray, Byte> image = dispFrame.Image;
-                    
+
                     var _object = new object();
                     bool lockTaken = false;
                     try
@@ -221,7 +223,7 @@ namespace EyeTrackerForm
                         if (lockTaken)
                         {
 
-                           
+
                             mComponent.HandleDisplayImage(image);
 
                             if (logger.IsDebugEnabled)
@@ -250,7 +252,7 @@ namespace EyeTrackerForm
                         {
                         }
                     }
-                    
+
                 }
                 catch
                 {
@@ -304,7 +306,7 @@ namespace EyeTrackerForm
         public double ConverTime (long camTime)
         {
             return (((camTime - lastCameraTime) / cam2sys)+ lastSystemTime);
-            
+
         }
         //Starts  filesystem watching at the chosen path to trigger feeding recordings.
         [PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
@@ -383,7 +385,7 @@ namespace EyeTrackerForm
 
                 string homePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 string rigLable = mWatchPath.Split(Path.DirectorySeparatorChar).Last();
-
+// TODO: add check to make sure flyVideos folder exists and create it if not.
                 string vidpath = Path.Combine(homePath, "flyVideos", rigLable);
 
                 string timelapseFilename = vidpath + Path.DirectorySeparatorChar + "timelapse_" + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss");
@@ -444,7 +446,7 @@ namespace EyeTrackerForm
             {
                 mGrabThread.Abort();
             }
-           
+
             if (mDisplayProcessThread.IsAlive)
             {
                 mDisplayProcessThread.Abort();

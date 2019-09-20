@@ -2,3 +2,4 @@ EyeTrackerForm/bin/*
 EyeTrackerForm/obj/*
 EyeTrackerForm/EyeTrackerForm.csproj.user
 EyeTrackerForm/.vs/EyeTrackerForm/*
+.DS*
