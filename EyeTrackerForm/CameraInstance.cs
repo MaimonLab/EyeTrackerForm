@@ -29,6 +29,7 @@ namespace EyeTrackerForm
         private CameraComponent mComponent;
         public int mTimelapseInterval = 15;
         public int mFeedVidLength = 10;
+        public int mDisplayInterval = 10;
 
         public bool mFullImage = true;
         public bool mRecord;
@@ -162,23 +163,23 @@ namespace EyeTrackerForm
 
                     currentFrame.ImageTime = imageTime;
 
-                    // If we're recording we'll only display and record the timelapse frame, otherwise we'll display all and record none.
+                    // If we're recording we'll only record the timelapse frame once every mTimelapseInterval
 
-                    if (currentFrame.FameID % mTimelapseInterval == 0 || !mRecord)
+                    if (currentFrame.FrameID % mTimelapseInterval == 0  && mRecord)
                     {
-                        if (mDisplay) //mDisplay
-                        {
-                            FrameData displayFrame;
-                            displayFrame = new FrameData(currentFrame.FameID, currentFrame.Image);
-                            mDisplayQueue.Add(displayFrame);
-                        }
-
-                        if (mRecord)
-                        {
-                            mTimelapseVid.Append(image);
-                        }
-
+                        mTimelapseVid.Append(image);
                     }
+                      // if we're displaying then either dislay every frame (if not recording) or display one frame every mDisplayInterval (if not.)
+                    if (mDisplay)
+                        {
+                          if (!mRecord || currentFrame.FrameID % mDisplayInterval == 0 )
+                          {
+                              FrameData displayFrame;
+                              displayFrame = new FrameData(currentFrame.FrameID, currentFrame.Image);
+                              mDisplayQueue.Add(displayFrame);
+                          }
+
+                        }
                     //if we're recording and there is a mFeedFrameCountdown, record every frame until we've gone through that countdown.
                     if(mRecord && mFeedFrameCountDown > 0)
                     {
@@ -228,7 +229,7 @@ namespace EyeTrackerForm
 
                             if (logger.IsDebugEnabled)
                             {
-                                logger.Debug("Display Frame {0} at {1}", dispFrame.FameID, HighResolutionDateTime.UtcNow);
+                                logger.Debug("Display Frame {0} at {1}", dispFrame.FrameID, HighResolutionDateTime.UtcNow);
                             }
 
                         }
@@ -354,6 +355,7 @@ namespace EyeTrackerForm
         {
             CameraTabPage page = (CameraTabPage)sender;
             mTimelapseInterval = page.mTimelapseTrackBar.mTrackbar.Value;
+            mDisplayInterval = page.mDisplayIntervalTrackBar.mTrackbar.Value;
             mFeedVidLength = page.mFeedVidLengthTrackBar.mTrackbar.Value;
 
         }
@@ -468,7 +470,7 @@ namespace EyeTrackerForm
 
     public class FrameData : Object
     {
-        public long FameID { get; set; }
+        public long FrameID { get; set; }
         public Image<Gray, Byte> Image { get; set; }
         public double ImageTime { get; set; }
 
@@ -477,7 +479,7 @@ namespace EyeTrackerForm
 
         public FrameData(long frameId, Image<Gray, Byte> image)
         {
-            this.FameID = frameId;
+            this.FrameID = frameId;
             this.Image = image;
             //this.IImage = iimage;
 

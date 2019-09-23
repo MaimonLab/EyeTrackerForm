@@ -9,14 +9,16 @@ namespace EyeTrackerForm
 {
     public class CameraTabPage : TabPage
     {
-        public int DEFAULTTIMELAPSEVALUE = 15;
+        public int DEFAULTTIMELAPSEVALUE = 30;
         public int DEFAULTFEEDVIDLENGTHVALUE = 10;
+        public int DEFAULTDISPLAYINTERVAL = 10;
         public int DEFAULTLEFTVALUE = 10;
         public int DEFAULTRIGHTVALUE = 20;
 
 
 
         public CameraSlider mTimelapseTrackBar;
+        public CameraSlider mDisplayIntervalTrackBar;
         public CameraSlider mFeedVidLengthTrackBar;
 
         public CheckBox mRecord;
@@ -39,14 +41,19 @@ namespace EyeTrackerForm
 
 
             mFeedVidLengthTrackBar = MakeTrackBar(CameraSliderType.FeedVidLength);
-            mFeedVidLengthTrackBar.SetMax(30);
+            mFeedVidLengthTrackBar.SetMax(90);
             mFeedVidLengthTrackBar.SetValue(DEFAULTFEEDVIDLENGTHVALUE);
+
+            mDisplayIntervalTrackBar = MakeTrackBar(CameraSliderType.DisplayInterval);
+            mDisplayIntervalTrackBar.SetMax(30);
+            mDisplayIntervalTrackBar.SetValue(DEFAULTDISPLAYINTERVAL);
 
 
 
             mTimelapseTrackBar.SliderChange += this.TrackChangeHandler;
             mFeedVidLengthTrackBar.SliderChange += this.TrackChangeHandler;
-          
+            mDisplayIntervalTrackBar.SliderChange += this.TrackChangeHandler;
+
 
             // Check Boxes
             mRecord = new CheckBox();
@@ -98,6 +105,7 @@ namespace EyeTrackerForm
 
 
             this.Controls.Add(mTimelapseTrackBar);
+            this.Controls.Add(mDisplayIntervalTrackBar);
             this.Controls.Add(mFeedVidLengthTrackBar);
 
             this.Controls.Add(mRecord);
@@ -166,6 +174,8 @@ namespace EyeTrackerForm
                 case CameraSliderType.timelapse:
                     name = "Timelapse frame interval";
                     break;
+                case CameraSliderType.DisplayInterval:
+                    name = "Display Interval";
                 case CameraSliderType.FeedVidLength:
                     name = "FeedVidLength";
                     break;
@@ -230,6 +240,7 @@ namespace EyeTrackerForm
     public enum CameraSliderType
     {
         timelapse,
-        FeedVidLength
+        FeedVidLength,
+        DisplayInterval
     }
 }

@@ -43,7 +43,7 @@ namespace EyeTrackerForm
             }
         }
 
-       
+
 
         private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -66,7 +66,8 @@ namespace EyeTrackerForm
             System.IO.File.WriteAllLines(
                 System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, thisPage.Text + ".config"),
                 new string[]{
-                    "Timelapse interval: " + thisPage.mTimelapseTrackBar.mTrackbar.Value.ToString(),
+                    "Timelapse Interval: " + thisPage.mTimelapseTrackBar.mTrackbar.Value.ToString(),
+                    "Display Interval:" + thisPage.mDisplayIntervalTrackBar.mTrackbar.Value.ToString(),
                     "Feeding Video Length: " + thisPage.mFeedVidLengthTrackBar.mTrackbar.Value.ToString()
                 });
         }

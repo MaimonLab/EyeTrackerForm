@@ -40,13 +40,13 @@ namespace EyeTrackerForm
         {
             mForm = form;
             mForm.tabControl1.SelectedIndexChanged += HandleTabChange;
-           
+
         }
 
         public void AddCamera(IManagedCamera camera)
         {
             CameraInstance cam = mCameraComponent.AddCameraInstance(camera);
-            
+
             string serialNumber = camera.DeviceSerialNumber.ToString();
             CameraTabPage newTab = new CameraTabPage(serialNumber);
             newTab.Init();
@@ -72,6 +72,7 @@ namespace EyeTrackerForm
             {
                 string[] lines = File.ReadAllLines(config);
                 newTab.mTimelapseTrackBar.mTrackbar.Value = Int32.Parse(lines[0].Split(' ')[1]);
+                newTab.mDisplayIntervalTrackBar.mTrackbar.Value = Int32.Parse(lines[0].Split(' ')[1]);
                 newTab.mFeedVidLengthTrackBar.mTrackbar.Value = Int32.Parse(lines[1].Split(' ')[1]);
 
             }
@@ -110,7 +111,7 @@ namespace EyeTrackerForm
                 mForm.toolStripStatusLabel1.Text = "MCC Device Failed.";
                 MccInit = false;
             }
-            
+
 
         }
 
@@ -133,7 +134,7 @@ namespace EyeTrackerForm
 
         public void HandleDisplayImage(Emgu.CV.Image<Gray, Byte> image)
         {
-            
+
             if (!isLocked)
             {
                 isLocked = true;
@@ -146,8 +147,8 @@ namespace EyeTrackerForm
                 isLocked = false;
             }
 
-            
-            
+
+
         }
 
         public void FireMcc ( int chan1, int chan2, float val1, float val2)
