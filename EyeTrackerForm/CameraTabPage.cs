@@ -37,15 +37,19 @@ namespace EyeTrackerForm
         {
             mTimelapseTrackBar = MakeTrackBar(CameraSliderType.timelapse);
             mTimelapseTrackBar.SetMax(180);
+            mTimelapseTrackBar.SetMin(1);
+
             mTimelapseTrackBar.SetValue(DEFAULTTIMELAPSEVALUE);
 
 
             mFeedVidLengthTrackBar = MakeTrackBar(CameraSliderType.FeedVidLength);
             mFeedVidLengthTrackBar.SetMax(90);
+            mFeedVidLengthTrackBar.SetMin(3);
             mFeedVidLengthTrackBar.SetValue(DEFAULTFEEDVIDLENGTHVALUE);
 
             mDisplayIntervalTrackBar = MakeTrackBar(CameraSliderType.DisplayInterval);
             mDisplayIntervalTrackBar.SetMax(30);
+            mDisplayIntervalTrackBar.SetMin(1);
             mDisplayIntervalTrackBar.SetValue(DEFAULTDISPLAYINTERVAL);
 
 
@@ -176,6 +180,7 @@ namespace EyeTrackerForm
                     break;
                 case CameraSliderType.DisplayInterval:
                     name = "Display Interval";
+                    break;
                 case CameraSliderType.FeedVidLength:
                     name = "FeedVidLength";
                     break;
@@ -230,6 +235,11 @@ namespace EyeTrackerForm
         public void SetMax(int value)
         {
             mTrackbar.Maximum = value;
+        }
+
+        public void SetMin(int value)
+        {
+            mTrackbar.Minimum = value;
         }
 
 
