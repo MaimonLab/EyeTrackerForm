@@ -387,8 +387,18 @@ namespace EyeTrackerForm
 
                 string homePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 string rigLable = mWatchPath.Split(Path.DirectorySeparatorChar).Last();
-// TODO: add check to make sure flyVideos folder exists and create it if not.
                 string vidpath = Path.Combine(homePath, "flyVideos", rigLable);
+
+                //Check that output directory exists
+                if (!Directory.Exists(vidpath))
+                {
+                    Directory.CreateDirectory(vidpath);
+                    logger.Info("Output directory did not exist. Creating output directory {0}", vidpath);
+                }
+                else
+                {
+                    logger.Info("Output directory: {0}", vidpath);
+                }
 
                 string timelapseFilename = vidpath + Path.DirectorySeparatorChar + "timelapse_" + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss");
                 string feedFilename = vidpath + Path.DirectorySeparatorChar + "feeding_" + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss");
