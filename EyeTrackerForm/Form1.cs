@@ -71,5 +71,10 @@ namespace EyeTrackerForm
                     "Feeding Video Length: " + thisPage.mFeedVidLengthTrackBar.mTrackbar.Value.ToString()
                 });
         }
+
+        private void Form1_Resize(object sender, EventArgs e)
+        {
+            mController.HandleFormResize(this.WindowState);
+        }
     }
 }

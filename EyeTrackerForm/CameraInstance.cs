@@ -403,9 +403,9 @@ namespace EyeTrackerForm
                 
                 // Create Video Writers
                 mTimelapseVid = new ImprovedVideoWriter(timelapseFilename, ImprovedVideoWriter.VideoCompressionType.H264, 20.0, (int)mCamera.Width.Value, (int)mCamera.Height.Value, true);
-                mTimelapseVid.MaxFileSize = 8;
+                mTimelapseVid.MaxFileSize = 8000;
                 mFeedingVid = new ImprovedVideoWriter(feedFilename, ImprovedVideoWriter.VideoCompressionType.H264, 20.0, (int)mCamera.Width.Value, (int)mCamera.Height.Value, true);
-                mFeedingVid.MaxFileSize = 8;
+                mFeedingVid.MaxFileSize = 8000;
 
             }
         }

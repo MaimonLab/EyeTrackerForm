@@ -19,7 +19,6 @@ namespace EyeTrackerForm
 
     public class EyeTrackerController
     {
-        bool isLocked = false;
         static readonly object _object = new object();
         public MccDaq.MccBoard mDaqBoard;
         public bool FirstCam = true;
@@ -29,6 +28,8 @@ namespace EyeTrackerForm
 
         CameraComponent mCameraComponent;
         Form1 mForm;
+        bool wasMinimized = false;
+        string mActiveTab ="";
         // MccInstance
 
         public EyeTrackerController()
@@ -80,6 +81,7 @@ namespace EyeTrackerForm
 
 
             mForm.tabControl1.TabPages.Add(newTab);
+            mActiveTab = serialNumber;
 
 
         }
@@ -118,34 +120,19 @@ namespace EyeTrackerForm
         public void HandleTabChange (object sender, EventArgs e)
         {
             TabControl thisControl = (TabControl)sender;
-            foreach (CameraInstance item in mCameraComponent.mCameraList)
-            {
-                if (item.serialNumber == thisControl.SelectedTab.Text)
-                {
-                    item.mDisplay = true;
-
-                }
-                else
-                {
-                    item.mDisplay = false;
-                }
-            }
+            ActivateTabDisplay(thisControl.SelectedTab.Text);
+            mActiveTab = thisControl.SelectedTab.Text;
         }
 
         public void HandleDisplayImage(Emgu.CV.Image<Gray, Byte> image)
         {
+            
+            float scaleHeight = (float)mForm.imageBox1.Height / (float)image.Height;
+            float scaleWidth = (float)mForm.imageBox1.Width / (float)image.Width;
+            float scale = Math.Min(scaleHeight, scaleWidth);
 
-            if (!isLocked)
-            {
-                isLocked = true;
-                float scaleHeight = (float)mForm.imageBox1.Height / (float)image.Height;
-                float scaleWidth = (float)mForm.imageBox1.Width / (float)image.Width;
-                float scale = Math.Min(scaleHeight, scaleWidth);
-
-                mForm.imageBox1.Image = image.Resize((int)(image.Width*scale), (int)(image.Height * scale), Emgu.CV.CvEnum.Inter.Linear);
-                //Thread.Sleep(2);
-                isLocked = false;
-            }
+            mForm.imageBox1.Image = image.Resize((int)(image.Width*scale), (int)(image.Height * scale), Emgu.CV.CvEnum.Inter.Linear);
+            //Thread.Sleep(2);
 
 
 
@@ -172,6 +159,41 @@ namespace EyeTrackerForm
 
             mCameraComponent.Close();
 
+
+        }
+
+        public void HandleFormResize(FormWindowState state)
+        {
+            if (state == FormWindowState.Minimized)
+            {
+                ActivateTabDisplay("null");
+                wasMinimized = true;
+            }
+            else
+            {
+                if (wasMinimized)
+                {
+                    wasMinimized = false;
+                    ActivateTabDisplay(mActiveTab);
+
+                }
+            }
+        }
+
+        private void ActivateTabDisplay(string tabSerialNumber)
+        {
+            foreach (CameraInstance item in mCameraComponent.mCameraList)
+            {
+                if (item.serialNumber == tabSerialNumber)
+                {
+                    item.mDisplay = true;
+
+                }
+                else
+                {
+                    item.mDisplay = false;
+                }
+            }
 
         }
 
