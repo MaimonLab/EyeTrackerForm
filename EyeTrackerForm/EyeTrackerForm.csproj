@@ -114,6 +114,7 @@
     </Compile>
     <Compile Include="HighResolutionDateTime.cs" />
     <Compile Include="ImageEventListener.cs" />
+    <Compile Include="ImprovedVideoWriter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Form1.resx">
