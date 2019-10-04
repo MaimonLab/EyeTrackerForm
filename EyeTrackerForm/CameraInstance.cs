@@ -66,11 +66,11 @@ namespace EyeTrackerForm
             H264
         }
 
-        static VideoType mChosenFileType = VideoType.Mjpg;
+        static VideoType mChosenFileType = VideoType.H264;
 
 // TODO: change to an OpenCV or ffmpeg based recorder to allow manipulation / saving timestampps.
-        IManagedSpinVideo mTimelapseVid;
-        IManagedSpinVideo mFeedingVid;
+        VideoWriter mTimelapseVid;
+        VideoWriter mFeedingVid;
 
         //public bool lockTaken = false;
 
@@ -114,11 +114,11 @@ namespace EyeTrackerForm
             iAcquisitionFrameRate.Value = 30.0;
             mFrameRate = (float) iAcquisitionFrameRate.Value;
 
-            mTimelapseVid = new ManagedSpinVideo();
-            mTimelapseVid.SetMaximumFileSize(8192);
+            //mTimelapseVid = new ManagedSpinVideo();
+            //mTimelapseVid.SetMaximumFileSize(8192);
 
-            mFeedingVid = new ManagedSpinVideo();
-            mFeedingVid.SetMaximumFileSize(8192);
+            //mFeedingVid = new ManagedSpinVideo();
+            //mFeedingVid.SetMaximumFileSize(8192);
 
             serialNumber = mCamera.DeviceSerialNumber.ToString();
 
@@ -143,8 +143,16 @@ namespace EyeTrackerForm
         public void DoCameraGrab()
         {
 
-            while(mStillAlive)
+            
+
+            //int fcc = VideoWriter.Fourcc('H', '2', '6', '4');
+            //string pathhh = Path.GetFullPath("C:/User/kfonselius/test/woooooooop.mp4");
+            //CvString thisPath = new CvString(pathhh);
+            //VideoWriter writer = new Emgu.CV.VideoWriter("here.mp4", backend_idx, fcc, 20.0, new System.Drawing.Size(1280, 1024), true);
+
+            while (mStillAlive)
             {
+                
                 try
                 {
 
@@ -162,12 +170,15 @@ namespace EyeTrackerForm
                     FrameData currentFrame = new FrameData(image.ChunkData.FrameID, myImage);
 
                     currentFrame.ImageTime = imageTime;
-
+                    myImage.Draw(new Rectangle(2, (int)mCamera.Height.Value - 25, 325, 25), new Gray(125), -1);
+                    myImage.Draw(DateTime.Now.ToString("MM/dd/yy HH:mm:ss"), new System.Drawing.Point(2, (int)mCamera.Height.Value -2), Emgu.CV.CvEnum.FontFace.HersheyPlain, 2.0, new Gray(254), 2, Emgu.CV.CvEnum.LineType.EightConnected);
                     // If we're recording we'll only record the timelapse frame once every mTimelapseInterval
 
                     if (currentFrame.FrameID % mTimelapseInterval == 0  && mRecord)
                     {
-                        mTimelapseVid.Append(image);
+                        mTimelapseVid.Write(myImage.Mat);
+                        //writer.Write(myImage.Mat);
+
                     }
                       // if we're displaying then either dislay every frame (if not recording) or display one frame every mDisplayInterval (if not.)
                     if (mDisplay)
@@ -183,7 +194,7 @@ namespace EyeTrackerForm
                     //if we're recording and there is a mFeedFrameCountdown, record every frame until we've gone through that countdown.
                     if(mRecord && mFeedFrameCountDown > 0)
                     {
-                        mFeedingVid.Append(image);
+                        mFeedingVid.Write(myImage.Mat);
                         mFeedFrameCountDown--;
                     }
                     image.Dispose();
@@ -400,42 +411,50 @@ namespace EyeTrackerForm
                     logger.Info("Output directory: {0}", vidpath);
                 }
 
-                string timelapseFilename = vidpath + Path.DirectorySeparatorChar + "timelapse_" + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss");
-                string feedFilename = vidpath + Path.DirectorySeparatorChar + "feeding_" + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss");
+                string timelapseFilename = (vidpath + Path.DirectorySeparatorChar + "timelapse_" + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss") + ".mp4");
+                string feedFilename = vidpath + Path.DirectorySeparatorChar + "feeding_" + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss") + ".mp4";
+
+                Backend[] backends = CvInvoke.WriterBackends;
+                int backend_idx = 0; //any backend;
+                foreach (Backend be in backends)
+                {
+                    if (be.Name.Equals("MSMF"))
+                    {
+                        backend_idx = be.ID;
+                        break;
+                    }
+                }
 
                 switch (mChosenFileType)
                 {
-                    case VideoType.Uncompressed:
-                        AviOption uncompressedOption = new AviOption();
-                        uncompressedOption.frameRate = mFrameRate;
-                        mTimelapseVid.Open(timelapseFilename, uncompressedOption);
-                        mFeedingVid.Open(feedFilename, uncompressedOption);
-                        break;
+                    //case VideoType.Uncompressed:
+                    //    AviOption uncompressedOption = new AviOption();
+                    //    uncompressedOption.frameRate = mFrameRate;
+                    //    mTimelapseVid.Open(timelapseFilename, uncompressedOption);
+                    //    mFeedingVid.Open(feedFilename, uncompressedOption);
+                    //    break;
 
-                    case VideoType.Mjpg:
-                        MJPGOption mjpgOption = new MJPGOption();
-                        mjpgOption.frameRate = mFrameRate;
-                        mjpgOption.quality = 75;
-                        mTimelapseVid.Open(timelapseFilename, mjpgOption);
-                        mFeedingVid.Open(feedFilename, mjpgOption);
-                        break;
+                    //case VideoType.Mjpg:
+                    //    MJPGOption mjpgOption = new MJPGOption();
+                    //    mjpgOption.frameRate = mFrameRate;
+                    //    mjpgOption.quality = 75;
+                    //    mTimelapseVid.Open(timelapseFilename, mjpgOption);
+                    //    mFeedingVid.Open(feedFilename, mjpgOption);
+                    //    break;
 
-                        //case VideoType.H264:
-                        //    H264Option h264Option = new H264Option();
-                        //    h264Option.frameRate = frameRateToSet;
-                        //    h264Option.bitrate = 1000000;
-                        //    h264Option.height = Convert.ToInt32(image.Height);
-                        //    h264Option.width = Convert.ToInt32(image.Width);
-                        //    mTimelapseVid.Open(videoFilename, h264Option);
-                        //    break;
+                    case VideoType.H264:
+                        int fcc = VideoWriter.Fourcc('H', '2', '6', '4');
+                        mTimelapseVid = new Emgu.CV.VideoWriter(timelapseFilename, backend_idx, fcc, 20.0, new System.Drawing.Size((int)mCamera.Width.Value, (int)mCamera.Height.Value), true);
+                        mFeedingVid = new Emgu.CV.VideoWriter(feedFilename, backend_idx, fcc, 20.0, new System.Drawing.Size((int)mCamera.Width.Value, (int)mCamera.Height.Value), true);
+                        break;
                 }
 
 
             }
             else
             {
-                mTimelapseVid.Close();
-                mFeedingVid.Close();
+                mTimelapseVid.Dispose();
+                mFeedingVid.Dispose();
             }
         }
 
@@ -468,8 +487,11 @@ namespace EyeTrackerForm
                 mTimeModel.Abort();
             }
 
-            mTimelapseVid.Close();
-            mFeedingVid.Close();
+            if (mTimelapseVid != null)
+            {
+                mTimelapseVid.Dispose();
+                mFeedingVid.Dispose();
+            }
 
             mCamera.EndAcquisition();
             mCamera.Dispose();
