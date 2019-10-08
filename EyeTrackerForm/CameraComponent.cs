@@ -36,17 +36,12 @@ namespace EyeTrackerForm
             mController.HandleDisplayImage(image);
         }
 
-        public void FireMcc(int chan1, int chan2, float val1, float val2)
-        {
-            mController.FireMcc(chan1, chan2, val1, val2);
-        }
-
         public void Close()
         {
             foreach (CameraInstance cam in mCameraList)
             {
                 cam.Close();
-                
+
             }
         }
     }
