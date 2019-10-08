@@ -9,7 +9,7 @@ namespace EyeTrackerForm
 {
     public class CameraTabPage : TabPage
     {
-        public int DEFAULTTIMELAPSEVALUE = 30;
+        public int DEFAULTTIMELAPSEVALUE = 60;
         public int DEFAULTFEEDVIDLENGTHVALUE = 10;
         public int DEFAULTDISPLAYINTERVAL = 10;
         public int DEFAULTLEFTVALUE = 10;
