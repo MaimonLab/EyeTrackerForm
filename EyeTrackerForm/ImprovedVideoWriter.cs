@@ -92,12 +92,16 @@ namespace EyeTrackerForm
 
             
         }
-
-        //Destructor
-        ~ImprovedVideoWriter()
+        public void Close()
         {
             mVideoWriter.Dispose();
         }
+
+        //Destructor
+        //~ImprovedVideoWriter()
+        //{ 
+        //    mVideoWriter.Dispose();
+        //}
 
         /// <summary>
         /// Writes Image to the video file.

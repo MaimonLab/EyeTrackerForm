@@ -425,6 +425,13 @@ namespace EyeTrackerForm
                 mFeedingVid.MaxFileSize = 8000;
 
             }
+            else
+            {
+                mTimelapseVid.Close();
+                mFeedingVid.Close();
+                mTimelapseVid = null;
+                mFeedingVid = null;
+            }
         }
 
         public void FullImageChangeHandler(object sender, System.EventArgs e)
