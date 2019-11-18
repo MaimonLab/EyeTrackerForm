@@ -91,8 +91,25 @@ namespace EyeTrackerForm
             IBool iChunkEnableFrame = camMap.GetNode<IBool>("ChunkEnable");
             iChunkEnableFrame.Value = true;
 
-//            Change framerate
-// fixme: crashes if camera is not framerate settable. Check if stetable and change if not.
+            // Turn off auto framerate if doable.
+            IEnum iAcquisitionFrameRateAuto = camMap.GetNode<IEnum>("AcquisitionFrameRateAuto");
+            if (iAcquisitionFrameRateAuto == null || !iAcquisitionFrameRateAuto.IsWritable)
+            {
+                Console.WriteLine("Unable to disable automatic framerate (enum retrieval). Aborting...\n");
+                return;
+            }
+
+            IEnumEntry iExposureAutoOff = iAcquisitionFrameRateAuto.GetEntryByName("Off");
+            if (iExposureAutoOff == null || !iExposureAutoOff.IsReadable)
+            {
+                Console.WriteLine("Unable to disable automatic framerate (entry retrieval). Aborting...\n");
+                return;
+            }
+
+            iAcquisitionFrameRateAuto.Value = iExposureAutoOff.Value;
+
+            //     Change framerate
+
             IFloat iAcquisitionFrameRate = camMap.GetNode<IFloat>("AcquisitionFrameRate");
             iAcquisitionFrameRate.Value = 30.0;
             mFrameRate = (float) iAcquisitionFrameRate.Value;
