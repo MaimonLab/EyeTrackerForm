@@ -50,10 +50,6 @@ namespace EyeTrackerForm
 
         }
 
-        private void connectMCCDeviceToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            mController.AddMCC();
-        }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {

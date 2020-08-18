@@ -294,7 +294,7 @@ namespace EyeTrackerForm
                         // Calculate mcc outputs in range 0 to 10 V from edge to edge of the ROI
                         float xval = (float)(pupx / (mRoiRight - mRoiLeft)* 10.0);
                         float yval = (float)(pupy / (mRoiBottom - mRoiTop) * 10.0);
-                        mComponent.FireMcc(this.Xchannel, this.Ychannel, xval, yval);
+
                         LatencyEventArgs latency = new LatencyEventArgs();
 
                         double procTime = HighResolutionDateTime.UtcNow;
@@ -306,7 +306,6 @@ namespace EyeTrackerForm
                         {
                             logger.Debug("PupilProc Frame {0} at {1}", thisFrame.FameID, procTime);
                         }
-                        int testc = 1;
                     }
                     else
                     {
