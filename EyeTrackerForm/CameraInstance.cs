@@ -170,7 +170,8 @@ namespace EyeTrackerForm
 
                     //Create timestamp on image
                     myImage.Draw(TimestampBackground, TimestampBackgroundColor, -1);
-                    myImage.Draw(DateTime.Now.ToString("MM/dd/yy HH:mm:ss"), TimeStampLocation, Emgu.CV.CvEnum.FontFace.HersheyPlain, 2.0, TimeStampTextColor, 2, Emgu.CV.CvEnum.LineType.EightConnected);
+                    myImage.Draw(DateTime.Now.ToString("MM/dd/yy HH:mm:ss"), TimeStampLocation,
+                        Emgu.CV.CvEnum.FontFace.HersheyPlain, 2.0, TimeStampTextColor, 2, Emgu.CV.CvEnum.LineType.EightConnected);
 
                     // If we're recording we'll only record the timelapse frame once every mTimelapseInterval
                     if (currentFrame.FrameID % mTimelapseInterval == 0  && mRecord)
@@ -179,7 +180,8 @@ namespace EyeTrackerForm
 
                     }
 
-                    // if we're displaying then either dislay every frame (if not recording) or display one frame every mDisplayInterval (if not.)
+                    // if we're displaying then either dislay every frame (if not recording) or display one
+                    //frame every mDisplayInterval (if not.)
                     if (mDisplay)
                         {
                           if (!mRecord || currentFrame.FrameID % mDisplayInterval == 0 )
@@ -191,7 +193,8 @@ namespace EyeTrackerForm
 
                         }
 
-                    //if we're recording and there is a mFeedFrameCountdown, record every frame until we've gone through that countdown.
+                    //if we're recording and there is a mFeedFrameCountdown, record every frame until 
+                    //we've gone through that countdown.
                     if(mRecord && mFeedFrameCountDown > 0)
                     {
                         mFeedingVid.Write(myImage.Mat);
