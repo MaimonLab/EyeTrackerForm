@@ -14,6 +14,8 @@ using Emgu.Util;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
 using System.Collections.Concurrent;
+using CsvHelper.Configuration;
+using CsvHelper;
 
 namespace EyeTrackerForm
 {
@@ -49,6 +51,9 @@ namespace EyeTrackerForm
         public string serialNumber;
 
         public event EventHandler<LatencyEventArgs> LatencyEvent;
+
+        public StreamWriter writer;
+        public CsvWriter dataFile;
 
         //public bool lockTaken = false;
 
@@ -90,13 +95,6 @@ namespace EyeTrackerForm
             IBool iChunkEnableFrame = camMap.GetNode<IBool>("ChunkEnable");
             iChunkEnableFrame.Value = true;
 
-            
-
-
-
-
-
-
 
             //mImageEventListener = new ImageEventListener(mCamera, this, mEventQueue);
             //mImageEventListener.NewImageEvent += HandleImageEvent;
@@ -107,6 +105,14 @@ namespace EyeTrackerForm
             mTimeModel.Start();
             //Thread.Sleep(30);
             serialNumber = mCamera.DeviceSerialNumber.ToString();
+
+            writer = new StreamWriter("logs/pupil_tracking_" + serialNumber + 
+                DateTime.Now.ToString("yyyyMMdd_HH_mm_ss") + ".csv");
+            dataFile = new CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture);
+            dataFile.Configuration.RegisterClassMap<DataRowMap>();
+            dataFile.WriteHeader<DataRow>();
+            dataFile.NextRecord();
+
             mCamera.BeginAcquisition();
 
         }
@@ -271,12 +277,22 @@ namespace EyeTrackerForm
                             if (largeIndex >= 0)
                             {
                                 VectorOfPoint workContour = contours[largeIndex];
-
                                 Moments moment = CvInvoke.Moments(workContour);
-
 
                                 pupx = moment.M10 / moment.M00;
                                 pupy = moment.M01 / moment.M00;
+
+                                DataRow row = new DataRow
+                                {
+                                    frameID = thisFrame.FameID,
+                                    imageTime = thisFrame.ImageTime,
+                                    pupilX = pupx + mRoiLeft,
+                                    pupilY = pupy + mRoiTop,
+                                    pupilSize = CvInvoke.ContourArea(workContour),
+                                    processTime = HighResolutionDateTime.UtcNow
+                                };
+                                dataFile.WriteRecord(row);
+                                dataFile.NextRecord();
                             }
                             else
                             {
@@ -292,8 +308,8 @@ namespace EyeTrackerForm
                             pupy = 0;
                         }
                         // Calculate mcc outputs in range 0 to 10 V from edge to edge of the ROI
-                        float xval = (float)(pupx / (mRoiRight - mRoiLeft)* 10.0);
-                        float yval = (float)(pupy / (mRoiBottom - mRoiTop) * 10.0);
+                        //float xval = (float)(pupx / (mRoiRight - mRoiLeft)* 10.0);
+                        //float yval = (float)(pupy / (mRoiBottom - mRoiTop) * 10.0);
 
                         LatencyEventArgs latency = new LatencyEventArgs();
 
@@ -301,6 +317,7 @@ namespace EyeTrackerForm
 
                         latency.Latency = procTime - thisFrame.ImageTime;
                         LatencyEvent(this, latency);
+
 
                         if (logger.IsDebugEnabled)
                         {
@@ -331,28 +348,45 @@ namespace EyeTrackerForm
                         }
                         mDisplayQueue.Add(displayFrame);
                     }
-
-                    
-
                 }
                 catch(Exception e)
                 {
                     logger.Error("{0} \n{1}", e.Message, e.StackTrace);
                     Thread.Sleep(3);
                 }
-
-                
-
-
-
             }
             //Do Image Display
-
-
-
         }
 
+        public class DataRow
+        {
+            public double frameID { get; set; }
+            public double imageTime { get; set; }
+            public double pupilX { get; set; }
+            public double pupilY { get; set; }
+            public double pupilSize { get; set; }
+            public double processTime { get; set; }
 
+            //public DataRow(double frameID, double imageTime, int pupilX, int pupilSize, double processTime)
+            //{
+            //    frameID = frameID;
+
+            //}
+        }
+
+        public class DataRowMap : ClassMap<DataRow>
+        {
+            public DataRowMap()
+            {
+                Map(m => m.frameID).Index(0).Name("frameID");
+                Map(m => m.imageTime).Index(1).Name("imageTime");
+                Map(m => m.pupilX).Index(2).Name("pupilX");
+                Map(m => m.pupilY).Index(3).Name("pupilY");
+                Map(m => m.pupilSize).Index(4).Name("pupilSize");
+                Map(m => m.processTime).Index(5).Name("processTime");
+
+            }
+        }
         public void DoDisplayImage(object img)
         {
             
@@ -492,6 +526,10 @@ namespace EyeTrackerForm
                 logger.Info("Pupil recodings stared on camera {5} with the following TOP, BOTTOM, LEFT, RIGHT, THRESHOLD values: {0}, {1}, {2}, {3}, {4}",
                     mRoiTop, mRoiBottom, mRoiLeft, mRoiRight, mThreshold, mCamera.DeviceSerialNumber.ToString());
             }
+            else
+            {
+                dataFile.Flush();
+            }
         }
 
         public void FullImageChangeHandler(object sender, System.EventArgs e)
@@ -515,6 +553,7 @@ namespace EyeTrackerForm
         {
             mStillAlive = false;
             Thread.Sleep(100);
+            dataFile.Flush();
             if (mGrabThread.IsAlive)
             {
                 mGrabThread.Abort();
