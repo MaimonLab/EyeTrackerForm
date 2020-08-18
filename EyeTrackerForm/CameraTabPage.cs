@@ -9,10 +9,10 @@ namespace EyeTrackerForm
 {
     public class CameraTabPage : TabPage
     {
-        public int DEFAULTTOPVALUE = 10;
-        public int DEFAULTBOTTOMVALUE = 20;
-        public int DEFAULTLEFTVALUE = 10;
-        public int DEFAULTRIGHTVALUE = 20;
+        public int DEFAULTTOPVALUE = 200;
+        public int DEFAULTBOTTOMVALUE = 400;
+        public int DEFAULTLEFTVALUE = 600;
+        public int DEFAULTRIGHTVALUE = 800;
         
 
 
@@ -23,6 +23,7 @@ namespace EyeTrackerForm
         public CameraSlider mThresholdTrackBar;
         public CheckBox mRecord;
         public CheckBox mFullImage;
+        public CheckBox mThreshImage;
         public Label mLatencyLabel;
         public Label mLatencyBox;
 
@@ -32,6 +33,7 @@ namespace EyeTrackerForm
         public event EventHandler ROIChanged;
         public event EventHandler RecordChange;
         public event EventHandler FullImageChange;
+        public event EventHandler ThreshImageChange;
 
         public void Init ()
         {
@@ -85,15 +87,25 @@ namespace EyeTrackerForm
             mFullImage.UseVisualStyleBackColor = true;
             mFullImage.Checked = true;
 
-            
+            //Thresholded image checkbox
+            mThreshImage = new CheckBox();
+            mThreshImage.AutoSize = true;
+            mThreshImage.Location = new System.Drawing.Point(10, 415);
+            mThreshImage.Size = new System.Drawing.Size(80, 17);
+            mThreshImage.Name = "ThreshImageCheckBox";
+            mThreshImage.Text = "Thresholded Image";
+            mThreshImage.UseVisualStyleBackColor = true;
+
+
             mRecord.CheckStateChanged += this.RecordChangeHandler;
             mFullImage.CheckStateChanged += this.FullImageChangeHandler;
+            mThreshImage.CheckedChanged += this.ThreshImageChangeHandler;
 
             // Latency Box
 
             mLatencyLabel = new Label();
             mLatencyLabel.AutoSize = true;
-            mLatencyLabel.Location = new System.Drawing.Point(10, 420);
+            mLatencyLabel.Location = new System.Drawing.Point(10, 440);
             mLatencyLabel.Name = "latency";
             mLatencyLabel.Size = new System.Drawing.Size(35, 13);
             mLatencyLabel.TabIndex = 6;
@@ -101,7 +113,7 @@ namespace EyeTrackerForm
 
             mLatencyBox = new Label();
             mLatencyBox.AutoSize = true;
-            mLatencyBox.Location = new System.Drawing.Point(55, 420);
+            mLatencyBox.Location = new System.Drawing.Point(55, 440);
             mLatencyBox.Name = "latencybox";
             mLatencyBox.Size = new System.Drawing.Size(35, 13);
             mLatencyBox.TabIndex = 7;
@@ -119,6 +131,7 @@ namespace EyeTrackerForm
             this.Controls.Add(mThresholdTrackBar);
             this.Controls.Add(mRecord);
             this.Controls.Add(mFullImage);
+            this.Controls.Add(mThreshImage);
             this.Controls.Add(mLatencyLabel);
             this.Controls.Add(mLatencyBox);
 
@@ -147,6 +160,11 @@ namespace EyeTrackerForm
         public void FullImageChangeHandler(object sender, System.EventArgs e)
         {
             FullImageChange(this, new EventArgs());
+        }
+
+        public void ThreshImageChangeHandler(object sender, System.EventArgs e)
+        {
+            ThreshImageChange(this, new EventArgs());
         }
 
         public void HandleLatencyEvent(object sender, LatencyEventArgs e)

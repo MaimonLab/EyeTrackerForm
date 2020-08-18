@@ -22,12 +22,13 @@ namespace EyeTrackerForm
         private ImageEventListener mImageEventListener;
         private IManagedCamera mCamera;
         private CameraComponent mComponent;
-        public int mRoiTop = 10;
-        public int mRoiBottom = 20;
-        public int mRoiLeft = 10;
-        public int mRoiRight = 20;
+        public int mRoiTop = 200;
+        public int mRoiBottom = 400;
+        public int mRoiLeft = 600;
+        public int mRoiRight = 800;
         public int mThreshold = 200;
         public bool mFullImage = true;
+        public bool mThreshImage = false;
         public bool mRecord;
         public bool mDisplay;
         public Pen mPen;
@@ -194,6 +195,24 @@ namespace EyeTrackerForm
             
         }
 
+        public bool ContourCloseToEdge(VectorOfPoint contour, int imageWidth, int imageHeight,
+                                        int minDist = 5) 
+        {
+            System.Drawing.Rectangle boundingBox = CvInvoke.BoundingRectangle(contour);
+            int xMin, yMin, xMax, yMax;
+            xMin = yMin = minDist;
+            xMax = imageWidth - minDist;
+            yMax = imageHeight - minDist;
+
+            if (boundingBox.X <= xMin || boundingBox.Y <= yMin ||
+               boundingBox.X + boundingBox.Width >= xMax ||
+               boundingBox.Y + boundingBox.Height >= yMax)
+            {
+                return true;
+            }
+            else return false;
+        }
+
         public void DoPupilTracking()
         {
             
@@ -206,6 +225,7 @@ namespace EyeTrackerForm
             Image<Gray, Byte> image;
             VectorOfVectorOfPoint contours;
             Image<Gray, Byte> cropImg;
+
             while (mStillAlive)
             {
                 try
@@ -213,6 +233,7 @@ namespace EyeTrackerForm
                     thisFrame = mPupilQueue.Take();
                     logger.Debug("size of opupil queue is {0}", mPupilQueue.Count);
                     image = thisFrame.Image;
+                    thresImage = image;
                     cropImg = image.Copy(new Rectangle(mRoiLeft, mRoiTop, mRoiRight - mRoiLeft, mRoiBottom - mRoiTop));
                     if (mRecord)
                     {
@@ -221,6 +242,7 @@ namespace EyeTrackerForm
                         {
 
                             blurImag = cropImg.SmoothBlur(5, 5);
+                            //blurImag =
 
                             blurImag._EqualizeHist();
                             
@@ -233,14 +255,17 @@ namespace EyeTrackerForm
 
                             double largest = -1.0;
                             int largeIndex = -1;
+                            // Find largest contour that is not close to any edge of the ROI
                             for (int i = 0; i < contours.Size; i++)
                             {
                                 double tempSize = CvInvoke.ContourArea(contours[i]);
-                                if (tempSize > largest)
+                                if (tempSize > largest && 
+                                    ! ContourCloseToEdge(contours[i], thresImage.Width, thresImage.Height))
                                 {
                                     largest = tempSize;
                                     largeIndex = i;
                                 }
+
                             }
 
                             if (largeIndex >= 0)
@@ -266,6 +291,7 @@ namespace EyeTrackerForm
                             pupx = 0;
                             pupy = 0;
                         }
+                        // Calculate mcc outputs in range 0 to 10 V from edge to edge of the ROI
                         float xval = (float)(pupx / (mRoiRight - mRoiLeft)* 10.0);
                         float yval = (float)(pupy / (mRoiBottom - mRoiTop) * 10.0);
                         mComponent.FireMcc(this.Xchannel, this.Ychannel, xval, yval);
@@ -292,9 +318,13 @@ namespace EyeTrackerForm
                     if (mDisplay) //mDisplay
                     {
                         FrameData displayFrame;
-                        if (mFullImage) //mFullImage
+                        if (mThreshImage)
                         {
-                            displayFrame = new FrameData(thisFrame.FameID, thisFrame.Image, Convert.ToInt32(pupx) + mRoiLeft, Convert.ToInt32(pupy) + mRoiTop );
+                            displayFrame = new FrameData(thisFrame.FameID, thresImage, Convert.ToInt32(pupx), Convert.ToInt32(pupy));
+                        }
+                        else if (mFullImage) //mFullImage
+                        {
+                            displayFrame = new FrameData(thisFrame.FameID, thisFrame.Image, Convert.ToInt32(pupx) + mRoiLeft, Convert.ToInt32(pupy) + mRoiTop);
                         }
                         else
                         {
@@ -354,7 +384,8 @@ namespace EyeTrackerForm
                             }
                             if (mRecord)
                             {
-                                image.Draw(new CircleF(new PointF(dispFrame.X, dispFrame.Y), 2.0f), new Gray(255), 2);
+                                image.Draw(new CircleF(new PointF(dispFrame.X, dispFrame.Y), 2.0f),
+                                    new Gray(mThreshImage ? 125 : 255), 2);
                             }
                             mComponent.HandleDisplayImage(image);
 
@@ -468,6 +499,12 @@ namespace EyeTrackerForm
         {
             CameraTabPage page = (CameraTabPage)sender;
             mFullImage = page.mFullImage.Checked;
+        }
+
+        public void ThreshImageChangeHandler(object sender, System.EventArgs e)
+        {
+            CameraTabPage page = (CameraTabPage)sender;
+            mThreshImage = page.mThreshImage.Checked;
         }
 
         public void DisplayChangeHandler(object sender, System.EventArgs e)

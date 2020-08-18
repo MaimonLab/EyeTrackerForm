@@ -53,6 +53,7 @@ namespace EyeTrackerForm
             newTab.ROIChanged += cam.ROIChangeHandler;
             newTab.RecordChange += cam.RecordChangeHandler;
             newTab.FullImageChange += cam.FullImageChangeHandler;
+            newTab.ThreshImageChange += cam.ThreshImageChangeHandler;
             cam.LatencyEvent += newTab.HandleLatencyEvent;
             if (FirstCam)
             {
