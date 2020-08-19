@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SpinnakerNET;
 using SpinnakerNET.GenApi;
+
 using System.Drawing;
 using System.Windows;
 using System.Threading;
@@ -16,6 +17,9 @@ using Emgu.CV.Util;
 using System.Collections.Concurrent;
 using CsvHelper.Configuration;
 using CsvHelper;
+using System.Windows.Forms;
+using System.Text.RegularExpressions;
+using System.Configuration;
 
 namespace EyeTrackerForm
 {
@@ -53,8 +57,12 @@ namespace EyeTrackerForm
         public event EventHandler<LatencyEventArgs> LatencyEvent;
 
         public StreamWriter writer;
-        public CsvWriter dataFile;
+        public CsvWriter mDataFile;
 
+        ImprovedVideoWriter mTimelapseVid;
+        ImprovedVideoWriter mThreshVid;
+        public int mTimelapseInterval = 300;
+        public bool mRunning = false;
         //public bool lockTaken = false;
 
 
@@ -63,7 +71,7 @@ namespace EyeTrackerForm
         public CameraInstance(IManagedCamera camera, CameraComponent component)
         {
             // Workers
-            
+
             mDisplayQueue = new BlockingCollection<FrameData>();
             mPupilQueue = new BlockingCollection<FrameData>();
             mEventQueue = new BlockingCollection<IManagedImage>();
@@ -106,12 +114,12 @@ namespace EyeTrackerForm
             //Thread.Sleep(30);
             serialNumber = mCamera.DeviceSerialNumber.ToString();
 
-            writer = new StreamWriter("logs/pupil_tracking_" + serialNumber + 
+            writer = new StreamWriter("logs/pupil_tracking_" + serialNumber +
                 DateTime.Now.ToString("_yyyyMMdd_HH_mm_ss") + ".csv");
-            dataFile = new CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture);
-            dataFile.Configuration.RegisterClassMap<DataRowMap>();
-            dataFile.WriteHeader<DataRow>();
-            dataFile.NextRecord();
+            mDataFile = new CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture);
+            mDataFile.Configuration.RegisterClassMap<DataRowMap>();
+            mDataFile.WriteHeader<DataRow>();
+            mDataFile.NextRecord();
 
             mCamera.BeginAcquisition();
 
@@ -123,14 +131,14 @@ namespace EyeTrackerForm
 
         ~CameraInstance()
         {
-            
-            
+
+
 
         }
 
         public void DoCameraGrab()
         {
-            
+
             while(mStillAlive)
             {
                 try
@@ -198,11 +206,11 @@ namespace EyeTrackerForm
 
             //cvThread.Join();
             //displayThread.Join();
-            
+
         }
 
         public bool ContourCloseToEdge(VectorOfPoint contour, int imageWidth, int imageHeight,
-                                        int minDist = 5) 
+                                        int minDist = 5)
         {
             System.Drawing.Rectangle boundingBox = CvInvoke.BoundingRectangle(contour);
             int xMin, yMin, xMax, yMax;
@@ -221,7 +229,7 @@ namespace EyeTrackerForm
 
         public void DoPupilTracking()
         {
-            
+
             double pupx;
             double pupy;
             FrameData thisFrame;
@@ -237,7 +245,7 @@ namespace EyeTrackerForm
                 try
                 {
                     thisFrame = mPupilQueue.Take();
-                    logger.Debug("size of opupil queue is {0}", mPupilQueue.Count);
+                    logger.Debug("size of pupil queue is {0}", mPupilQueue.Count);
                     image = thisFrame.Image;
                     thresImage = image;
                     cropImg = image.Copy(new Rectangle(mRoiLeft, mRoiTop, mRoiRight - mRoiLeft, mRoiBottom - mRoiTop));
@@ -248,10 +256,8 @@ namespace EyeTrackerForm
                         {
 
                             blurImag = cropImg.SmoothBlur(5, 5);
-                            //blurImag =
-
                             blurImag._EqualizeHist();
-                            
+
                             thresImage = blurImag.ThresholdBinary(new Gray(mThreshold), new Gray(255));
                             contours = new VectorOfVectorOfPoint();
 
@@ -265,7 +271,7 @@ namespace EyeTrackerForm
                             for (int i = 0; i < contours.Size; i++)
                             {
                                 double tempSize = CvInvoke.ContourArea(contours[i]);
-                                if (tempSize > largest && 
+                                if (tempSize > largest &&
                                     ! ContourCloseToEdge(contours[i], thresImage.Width, thresImage.Height))
                                 {
                                     largest = tempSize;
@@ -284,32 +290,27 @@ namespace EyeTrackerForm
 
                                 DataRow row = new DataRow
                                 {
-                                    frameID = thisFrame.FameID,
+                                    frameID = thisFrame.FrameID,
                                     imageTime = thisFrame.ImageTime,
                                     pupilX = pupx + mRoiLeft,
                                     pupilY = pupy + mRoiTop,
                                     pupilSize = CvInvoke.ContourArea(workContour),
                                     processTime = HighResolutionDateTime.UtcNow
                                 };
-                                dataFile.WriteRecord(row);
-                                dataFile.NextRecord();
+                                mDataFile.WriteRecord(row);
+                                mDataFile.NextRecord();
                             }
                             else
                             {
                                 pupx = 0;
                                 pupy = 0;
                             }
-
-
                         }
                         catch
                         {
                             pupx = 0;
                             pupy = 0;
                         }
-                        // Calculate mcc outputs in range 0 to 10 V from edge to edge of the ROI
-                        //float xval = (float)(pupx / (mRoiRight - mRoiLeft)* 10.0);
-                        //float yval = (float)(pupy / (mRoiBottom - mRoiTop) * 10.0);
 
                         LatencyEventArgs latency = new LatencyEventArgs();
 
@@ -321,14 +322,35 @@ namespace EyeTrackerForm
 
                         if (logger.IsDebugEnabled)
                         {
-                            logger.Debug("PupilProc Frame {0} at {1}", thisFrame.FameID, procTime);
+                            logger.Debug("PupilProc Frame {0} at {1}", thisFrame.FrameID, procTime);
                         }
                     }
                     else
                     {
                         pupx = 0;
                         pupy = 0;
+                    }
 
+                    //  timestamp parameters
+                    Rectangle TimestampBackground = new Rectangle(2, (int)mCamera.Height.Value - 25, 325, 25);
+                    Gray TimestampBackgroundColor = new Gray(0);
+                    System.Drawing.Point TimeStampLocation = new System.Drawing.Point(2, (int)mCamera.Height.Value - 2);
+                    Gray TimeStampTextColor = new Gray(255);
+
+                    //Create timestamp on image
+                    thisFrame.Image.Draw(TimestampBackground, TimestampBackgroundColor, -1);
+                    thisFrame.Image.Draw(DateTime.Now.ToString("MM/dd/yy HH:mm:ss"),
+                        TimeStampLocation, Emgu.CV.CvEnum.FontFace.HersheyPlain, 2.0,
+                        TimeStampTextColor, 2, Emgu.CV.CvEnum.LineType.EightConnected);
+
+                    // add pupil center point
+                    thisFrame.Image.Draw(new CircleF(new PointF((float)pupx + mRoiLeft,
+                        (float)pupy + mRoiTop), 2.0f), new Gray(255), 2);
+
+                    if (mRecord && thisFrame.FrameID % mTimelapseInterval == 0)
+                    {
+                        mTimelapseVid.Write(thisFrame.Image.Mat);
+                        mThreshVid.Write(thresImage.Mat);
                     }
 
                     if (mDisplay) //mDisplay
@@ -336,15 +358,20 @@ namespace EyeTrackerForm
                         FrameData displayFrame;
                         if (mThreshImage)
                         {
-                            displayFrame = new FrameData(thisFrame.FameID, thresImage, Convert.ToInt32(pupx), Convert.ToInt32(pupy));
+                            displayFrame = new FrameData(thisFrame.FrameID,
+                                thresImage, Convert.ToInt32(pupx),
+                                Convert.ToInt32(pupy));
                         }
                         else if (mFullImage) //mFullImage
                         {
-                            displayFrame = new FrameData(thisFrame.FameID, thisFrame.Image, Convert.ToInt32(pupx) + mRoiLeft, Convert.ToInt32(pupy) + mRoiTop);
+                            displayFrame = new FrameData(thisFrame.FrameID,
+                                thisFrame.Image, Convert.ToInt32(pupx) + mRoiLeft,
+                                Convert.ToInt32(pupy) + mRoiTop);
                         }
                         else
                         {
-                            displayFrame = new FrameData(thisFrame.FameID, cropImg, Convert.ToInt32(pupx), Convert.ToInt32(pupy));
+                            displayFrame = new FrameData(thisFrame.FrameID,
+                            cropImg, Convert.ToInt32(pupx), Convert.ToInt32(pupy));
                         }
                         mDisplayQueue.Add(displayFrame);
                     }
@@ -389,7 +416,7 @@ namespace EyeTrackerForm
         }
         public void DoDisplayImage(object img)
         {
-            
+
             FrameData dispFrame;
 
             while (mStillAlive)
@@ -408,9 +435,6 @@ namespace EyeTrackerForm
 
                         if (lockTaken)
                         {
-
-
-
                             if (mFullImage) //mFullImage
                             {
                                 image.Draw(new Rectangle(mRoiLeft, mRoiTop, mRoiRight - mRoiLeft, mRoiBottom - mRoiTop), new Gray(255), 2);
@@ -424,11 +448,9 @@ namespace EyeTrackerForm
 
                             if (logger.IsDebugEnabled)
                             {
-                                logger.Debug("Display Frame {0} at {1}", dispFrame.FameID, HighResolutionDateTime.UtcNow);
+                                logger.Debug("Display Frame {0} at {1}", dispFrame.FrameID, HighResolutionDateTime.UtcNow);
                             }
-
                         }
-
 
                         //mComponent.HandleDisplayImage(workingImage.);
 
@@ -464,10 +486,6 @@ namespace EyeTrackerForm
 
         public void TimeModel()
         {
-
-            
-
-
             while (mStillAlive)
             {
                 //mCamera.Timestamp
@@ -492,11 +510,7 @@ namespace EyeTrackerForm
                     lastCameraTime = cameraTime;
                     lastSystemTime = thisTime;
                     Thread.Sleep(5000);
-
                 }
-
-
-
             }
         }
 
@@ -504,7 +518,6 @@ namespace EyeTrackerForm
         {
             return (((camTime - lastCameraTime) / cam2sys)+ lastSystemTime);
         }
-
 
 
         public void ROIChangeHandler(object sender, System.EventArgs e)
@@ -517,18 +530,70 @@ namespace EyeTrackerForm
             mThreshold = page.mThresholdTrackBar.mTrackbar.Value;
         }
 
+
         public void RecordChangeHandler(object sender, System.EventArgs e)
         {
             CameraTabPage page = (CameraTabPage)sender;
             mRecord = page.mRecord.Checked;
             if (mRecord)
             {
-                logger.Info("Pupil recodings stared on camera {5} with the following TOP, BOTTOM, LEFT, RIGHT, THRESHOLD values: {0}, {1}, {2}, {3}, {4}",
-                    mRoiTop, mRoiBottom, mRoiLeft, mRoiRight, mThreshold, mCamera.DeviceSerialNumber.ToString());
+                RigSelection rigSelector = new RigSelection();
+                DialogResult result = rigSelector.ShowDialog();
+                if (result == DialogResult.OK)
+                {
+                    mRunning = true;
+                    string rigLabel = rigSelector.SelectedRig;
+                    int cohortNumber = int.Parse(rigSelector.CohortNumber);
+
+                    Regex re = new Regex(@"([a-zA-Z]+)(\d+)");
+                    Match rigMatch = re.Match(rigLabel);
+
+                    int rigNumber = int.Parse(rigMatch.Groups[2].Value);
+
+                    string vidPath = Path.Combine(ConfigurationManager.AppSettings["output_path_root"], rigLabel,
+                        "r" + rigNumber.ToString("D2") + "c" + cohortNumber.ToString("D3"));
+
+                    page.mRigNum.Text = rigNumber.ToString("D2");
+                    page.mCohortNum.Text = cohortNumber.ToString("D3");
+
+                    //Check that output directory exists
+                    if (!Directory.Exists(vidPath))
+                    {
+                        Directory.CreateDirectory(vidPath);
+                        logger.Info($"Output directory did not exist. Creating output directory {vidPath}");
+                    }
+                    else
+                    {
+                        logger.Info($"Output directory: {vidPath}");
+                    }
+                    // Create video file paths
+                    string timelapseFilename = (vidPath + Path.DirectorySeparatorChar + "timelapse_" + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss"));
+
+                    // Create Video Writers
+                    mTimelapseVid = new ImprovedVideoWriter(timelapseFilename, ImprovedVideoWriter.VideoCompressionType.H264, 20.0, (int)mCamera.Width.Value, (int)mCamera.Height.Value, true);
+                    mTimelapseVid.MaxFileSize = 8000;
+                    //mThreshVid = new ImprovedVideoWriter(threshVidFilename, ImprovedVideoWriter.VideoCompressionType.H264,)
+                    logger.Info("Pupil recodings stared on camera {5} with the following TOP, BOTTOM, LEFT, RIGHT, THRESHOLD values: {0}, {1}, {2}, {3}, {4}",
+                         mRoiTop, mRoiBottom, mRoiLeft, mRoiRight, mThreshold, mCamera.DeviceSerialNumber.ToString());
+
+                }
+                else  // they pushed cancel or similar
+                {
+                    page.mRecord.Checked = false;
+                }
             }
             else
             {
-                dataFile.Flush();
+                if (mRunning)
+                {
+                    mTimelapseVid.Close();
+                    mTimelapseVid = null;
+                    mRunning = false;
+                    page.mCohortNum.Text = "";
+                    page.mRigNum.Text = "";
+                    mDataFile.Flush();
+
+                }
             }
         }
 
@@ -546,14 +611,18 @@ namespace EyeTrackerForm
 
         public void DisplayChangeHandler(object sender, System.EventArgs e)
         {
-            
+
         }
-        
+
         public void Close()
         {
             mStillAlive = false;
             Thread.Sleep(100);
-            dataFile.Flush();
+            mDataFile.Flush();
+            if (mRunning)
+            {
+                mTimelapseVid.Close();
+            }
             if (mGrabThread.IsAlive)
             {
                 mGrabThread.Abort();
@@ -573,13 +642,13 @@ namespace EyeTrackerForm
             mCamera.EndAcquisition();
             mCamera.Dispose();
         }
-    
+
 
     }
 
     public class FrameData : Object
     {
-        public long FameID { get; set; }
+        public long FrameID { get; set; }
         public Image<Gray, Byte> Image { get; set; }
         public double ImageTime { get; set; }
         public int X;
@@ -588,14 +657,14 @@ namespace EyeTrackerForm
 
         public FrameData(long frameId, Image<Gray, Byte> image, int x = 0, int y=0)
         {
-            this.FameID = frameId;
+            this.FrameID = frameId;
             this.Image = image;
             X = x;
             Y = y;
-            
+
         }
 
-        
+
     }
 
 }

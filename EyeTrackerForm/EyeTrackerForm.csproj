@@ -124,8 +124,15 @@
     </Compile>
     <Compile Include="HighResolutionDateTime.cs" />
     <Compile Include="ImageEventListener.cs" />
+    <Compile Include="ImprovedVideoWriter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Rig Selection.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Rig Selection.Designer.cs">
+      <DependentUpon>Rig Selection.cs</DependentUpon>
+    </Compile>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
@@ -138,6 +145,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="Rig Selection.resx">
+      <DependentUpon>Rig Selection.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="NLog.config" />
     <None Include="NLog.xsd">
       <SubType>Designer</SubType>

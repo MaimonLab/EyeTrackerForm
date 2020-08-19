@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Configuration;
 
 namespace EyeTrackerForm
 {
@@ -13,7 +14,7 @@ namespace EyeTrackerForm
         public int DEFAULTBOTTOMVALUE = 400;
         public int DEFAULTLEFTVALUE = 600;
         public int DEFAULTRIGHTVALUE = 800;
-        
+
 
 
         public CameraSlider mTopTrackBar;
@@ -26,6 +27,7 @@ namespace EyeTrackerForm
         public CheckBox mThreshImage;
         public Label mLatencyLabel;
         public Label mLatencyBox;
+        public Label mRigLab, mRigNum, mCohortLab, mCohortNum;
 
 
         public CameraTabPage() : base() { }
@@ -40,17 +42,17 @@ namespace EyeTrackerForm
             mTopTrackBar = MakeTrackBar(CameraSliderType.TOP);
             mTopTrackBar.SetMax(1023);
             mTopTrackBar.SetValue(DEFAULTTOPVALUE);
-            
+
 
             mBottomTrackBar = MakeTrackBar(CameraSliderType.BOTTOM);
             mBottomTrackBar.SetMax(1023);
             mBottomTrackBar.SetValue(DEFAULTBOTTOMVALUE);
-            
+
 
             mLeftTrackBar = MakeTrackBar(CameraSliderType.LEFT);
             mLeftTrackBar.SetMax(1279);
             mLeftTrackBar.SetValue(DEFAULTLEFTVALUE);
-            
+
 
             mRightTrackBar = MakeTrackBar(CameraSliderType.RIGHT);
             mRightTrackBar.SetMax(1279);
@@ -59,7 +61,7 @@ namespace EyeTrackerForm
             mThresholdTrackBar = MakeTrackBar(CameraSliderType.THRESHOLD);
             mThresholdTrackBar.SetMax(255);
             mThresholdTrackBar.SetValue(200);
-            
+
             mTopTrackBar.SliderChange += this.TrackChangeHandler;
             mBottomTrackBar.SliderChange += this.TrackChangeHandler;
             mLeftTrackBar.SliderChange += this.TrackChangeHandler;
@@ -101,8 +103,7 @@ namespace EyeTrackerForm
             mFullImage.CheckStateChanged += this.FullImageChangeHandler;
             mThreshImage.CheckedChanged += this.ThreshImageChangeHandler;
 
-            // Latency Box
-
+            //Latency box
             mLatencyLabel = new Label();
             mLatencyLabel.AutoSize = true;
             mLatencyLabel.Location = new System.Drawing.Point(10, 440);
@@ -119,7 +120,28 @@ namespace EyeTrackerForm
             mLatencyBox.TabIndex = 7;
             mLatencyBox.Text = "0";
 
+            // Rig and Cohort labels
+            mRigLab = new Label();
+            mRigNum = new Label();
+            mCohortLab = new Label();
+            mCohortNum = new Label();
 
+            mRigLab.Location = new System.Drawing.Point(10, 460);
+            mRigLab.Text = "Rig:";
+            //mRigLab.Size = new System.Drawing.Size(35, 13);
+            mRigLab.Name = "rigLabel";
+            mRigLab.AutoSize = true;
+
+            mRigNum.Location = new System.Drawing.Point(40, 460);
+            mRigNum.Text = "";
+            //mRigNum.Size = new System.Drawing.Size(80, 20);
+            mCohortLab.Location = new System.Drawing.Point(10, 485);
+            mCohortLab.Text = "Cohort:";
+            //mCohortLab.Size = new System.Drawing.Size(50, 20);
+            mCohortLab.AutoSize = true;
+
+            mCohortNum.Location = new System.Drawing.Point(60, 485);
+            mCohortNum.Text = "";
 
 
 
@@ -134,6 +156,12 @@ namespace EyeTrackerForm
             this.Controls.Add(mThreshImage);
             this.Controls.Add(mLatencyLabel);
             this.Controls.Add(mLatencyBox);
+
+            this.Controls.Add(mRigLab);
+            this.Controls.Add(mRigNum);
+            this.Controls.Add(mCohortLab);
+            this.Controls.Add(mCohortNum);
+
 
         }
 
@@ -278,10 +306,10 @@ namespace EyeTrackerForm
             mTrackbar.Maximum = value;
         }
 
-       
+
     }
 
-    
+
 
     public enum CameraSliderType
     {
