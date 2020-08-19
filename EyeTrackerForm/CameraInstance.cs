@@ -107,7 +107,7 @@ namespace EyeTrackerForm
             serialNumber = mCamera.DeviceSerialNumber.ToString();
 
             writer = new StreamWriter("logs/pupil_tracking_" + serialNumber + 
-                DateTime.Now.ToString("yyyyMMdd_HH_mm_ss") + ".csv");
+                DateTime.Now.ToString("_yyyyMMdd_HH_mm_ss") + ".csv");
             dataFile = new CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture);
             dataFile.Configuration.RegisterClassMap<DataRowMap>();
             dataFile.WriteHeader<DataRow>();
