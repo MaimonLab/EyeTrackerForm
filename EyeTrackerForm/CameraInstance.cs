@@ -39,7 +39,6 @@ namespace EyeTrackerForm
         public bool mDisplay;
         public Pen mPen;
         public bool mStillAlive = true;
-        private int counter = 0;
         public double cam2sys = 0.0;
         public double lastSystemTime = 0;
         public long lastCameraTime = 0;
@@ -60,7 +59,7 @@ namespace EyeTrackerForm
         public CsvWriter mDataFile;
 
         ImprovedVideoWriter mTimelapseVid;
-        ImprovedVideoWriter mThreshVid;
+        //ImprovedVideoWriter mThreshVid;
         public int mTimelapseInterval = 300;
         public bool mRunning = false;
         //public bool lockTaken = false;
@@ -113,13 +112,6 @@ namespace EyeTrackerForm
             mTimeModel.Start();
             //Thread.Sleep(30);
             serialNumber = mCamera.DeviceSerialNumber.ToString();
-
-            writer = new StreamWriter("logs/pupil_tracking_" + serialNumber +
-                DateTime.Now.ToString("_yyyyMMdd_HH_mm_ss") + ".csv");
-            mDataFile = new CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture);
-            mDataFile.Configuration.RegisterClassMap<DataRowMap>();
-            mDataFile.WriteHeader<DataRow>();
-            mDataFile.NextRecord();
 
             mCamera.BeginAcquisition();
 
@@ -350,7 +342,7 @@ namespace EyeTrackerForm
                     if (mRecord && thisFrame.FrameID % mTimelapseInterval == 0)
                     {
                         mTimelapseVid.Write(thisFrame.Image.Mat);
-                        mThreshVid.Write(thresImage.Mat);
+                        //mThreshVid.Write(thresImage.Mat);
                     }
 
                     if (mDisplay) //mDisplay
@@ -468,7 +460,6 @@ namespace EyeTrackerForm
                         }
                         else
                         {
-                            int thiskldjf = 1;
                         }
                     }
 
@@ -566,8 +557,20 @@ namespace EyeTrackerForm
                     {
                         logger.Info($"Output directory: {vidPath}");
                     }
+
+                    // create csv file 
+                    string csvFileName = (vidPath + Path.DirectorySeparatorChar + "pupilTracking_" 
+                            + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss") + ".csv");
+
+                    writer = new StreamWriter(csvFileName);
+                    mDataFile = new CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture);
+                    mDataFile.Configuration.RegisterClassMap<DataRowMap>();
+                    mDataFile.WriteHeader<DataRow>();
+                    mDataFile.NextRecord();
+
                     // Create video file paths
-                    string timelapseFilename = (vidPath + Path.DirectorySeparatorChar + "timelapse_" + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss"));
+                    string timelapseFilename = (vidPath + Path.DirectorySeparatorChar + "timelapse_" 
+                        + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss"));
 
                     // Create Video Writers
                     mTimelapseVid = new ImprovedVideoWriter(timelapseFilename, ImprovedVideoWriter.VideoCompressionType.H264, 20.0, (int)mCamera.Width.Value, (int)mCamera.Height.Value, true);

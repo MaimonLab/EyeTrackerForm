@@ -101,9 +101,6 @@ namespace EyeTrackerForm
                     item.mDisplay = false;
                 }
             }
-            
-
-            int test = 1;
         }
 
         public void HandleDisplayImage(Emgu.CV.Image<Gray, Byte> image)
