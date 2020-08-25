@@ -237,7 +237,7 @@ namespace EyeTrackerForm
                 try
                 {
                     thisFrame = mPupilQueue.Take();
-                    logger.Debug("size of pupil queue is {0}", mPupilQueue.Count);
+                    //logger.Debug("size of pupil queue is {0}", mPupilQueue.Count);
                     image = thisFrame.Image;
                     thresImage = image;
                     cropImg = image.Copy(new Rectangle(mRoiLeft, mRoiTop, mRoiRight - mRoiLeft, mRoiBottom - mRoiTop));
@@ -399,10 +399,10 @@ namespace EyeTrackerForm
             {
                 Map(m => m.frameID).Index(0).Name("frameID");
                 Map(m => m.imageTime).Index(1).Name("imageTime");
-                Map(m => m.pupilX).Index(2).Name("pupilX");
-                Map(m => m.pupilY).Index(3).Name("pupilY");
-                Map(m => m.pupilSize).Index(4).Name("pupilSize");
-                Map(m => m.processTime).Index(5).Name("processTime");
+                //Map(m => m.pupilX).Index(2).Name("pupilX");
+                //Map(m => m.pupilY).Index(3).Name("pupilY");
+                //Map(m => m.pupilSize).Index(4).Name("pupilSize");
+                //Map(m => m.processTime).Index(5).Name("processTime");
 
             }
         }
@@ -559,7 +559,7 @@ namespace EyeTrackerForm
                     }
 
                     // create csv file 
-                    string csvFileName = (vidPath + Path.DirectorySeparatorChar + "pupilTracking_" 
+                    string csvFileName = (vidPath + Path.DirectorySeparatorChar + "searchbehavior_" 
                             + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss") + ".csv");
 
                     writer = new StreamWriter(csvFileName);
