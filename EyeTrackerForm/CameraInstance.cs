@@ -60,7 +60,7 @@ namespace EyeTrackerForm
 
         ImprovedVideoWriter mTimelapseVid;
         //ImprovedVideoWriter mThreshVid;
-        public int mTimelapseInterval = 1;
+        public int mTimelapseInterval = 300;
         public bool mRunning = false;
         //public bool lockTaken = false;
 
@@ -198,10 +198,10 @@ namespace EyeTrackerForm
 
             //cvThread.Join();
             //displayThread.Join();
-            
+
         }
 
-/*        public bool ContourCloseToEdge(VectorOfPoint contour, int imageWidth, int imageHeight,
+        public bool ContourCloseToEdge(VectorOfPoint contour, int imageWidth, int imageHeight,
                                         int minDist = 5)
         {
             System.Drawing.Rectangle boundingBox = CvInvoke.BoundingRectangle(contour);
@@ -217,7 +217,7 @@ namespace EyeTrackerForm
                 return true;
             }
             else return false;
-        }*/
+        }
 
         public void DoPupilTracking()
         {
@@ -226,12 +226,12 @@ namespace EyeTrackerForm
             double pupy;
             FrameData thisFrame;
 
+            Image<Gray, Byte> thresImage;
+            Image<Gray, Byte> blurImag;
             Image<Gray, Byte> image;
-            /* Image<Gray, Byte> thresImage;
-             Image<Gray, Byte> blurImag;
-             VectorOfVectorOfPoint contours;
-             Image<Gray, Byte> cropImg;
-             */
+            VectorOfVectorOfPoint contours;
+            Image<Gray, Byte> cropImg;
+
             while (mStillAlive)
             {
                 try
@@ -239,85 +239,71 @@ namespace EyeTrackerForm
                     thisFrame = mPupilQueue.Take();
                     //logger.Debug("size of pupil queue is {0}", mPupilQueue.Count);
                     image = thisFrame.Image;
-                   /* thresImage = image;
+                    thresImage = image;
                     cropImg = image.Copy(new Rectangle(mRoiLeft, mRoiTop, mRoiRight - mRoiLeft, mRoiBottom - mRoiTop));
-                 */   if (mRecord)
+                    if (mRecord)
                     {
 
-                        /*  try
-                          {
-
-                             *//* blurImag = cropImg.SmoothBlur(5, 5);
-                              blurImag._EqualizeHist();
-
-                              thresImage = blurImag.ThresholdBinary(new Gray(mThreshold), new Gray(255));
-                              contours = new VectorOfVectorOfPoint();
-
-                              Mat hierarchy = new Mat();
-                              CvInvoke.FindContours(thresImage, contours, hierarchy,
-                                  Emgu.CV.CvEnum.RetrType.Tree, Emgu.CV.CvEnum.ChainApproxMethod.ChainApproxSimple);
-
-                              double largest = -1.0;
-                              int largeIndex = -1;
-                              // Find largest contour that is not close to any edge of the ROI
-                              for (int i = 0; i < contours.Size; i++)
-                              {
-                                  double tempSize = CvInvoke.ContourArea(contours[i]);
-                                  if (tempSize > largest &&
-                                      ! ContourCloseToEdge(contours[i], thresImage.Width, thresImage.Height))
-                                  {
-                                      largest = tempSize;
-                                      largeIndex = i;
-                                  }
-
-                              }*//*
-
-                              if (largeIndex >= 0)
-                              {
-                                  VectorOfPoint workContour = contours[largeIndex];
-                                  Moments moment = CvInvoke.Moments(workContour);
-
-                                  pupx = moment.M10 / moment.M00;
-                                  pupy = moment.M01 / moment.M00;
-
-                                  DataRow row = new DataRow
-                                  {
-                                      frameID = thisFrame.FrameID,
-                                      imageTime = thisFrame.ImageTime,
-                                      //pupilX = pupx + mRoiLeft,
-                                      //pupilY = pupy + mRoiTop,
-                                      //pupilSize = CvInvoke.ContourArea(workContour),
-                                      processTime = HighResolutionDateTime.UtcNow
-                                  };
-                                  mDataFile.WriteRecord(row);
-                                  mDataFile.NextRecord();
-                              }
-                              else
-                              {
-                                  pupx = 0;
-                                  pupy = 0;
-                              }
-                          }
-                          catch
-                          {
-
-                          }*/
-
-                        DataRow row = new DataRow
+                        try
                         {
-                            frameID = thisFrame.FrameID,
-                            imageTime = thisFrame.ImageTime,
-                            //pupilX = pupx + mRoiLeft,
-                            //pupilY = pupy + mRoiTop,
-                            //pupilSize = CvInvoke.ContourArea(workContour),
-                            processTime = HighResolutionDateTime.UtcNow
-                        };
-                        mDataFile.WriteRecord(row);
-                        mDataFile.NextRecord();
-                        mDataFile.Flush();
 
-                        pupx = 0;
-                        pupy = 0;
+                            blurImag = cropImg.SmoothBlur(5, 5);
+                            blurImag._EqualizeHist();
+
+                            thresImage = blurImag.ThresholdBinary(new Gray(mThreshold), new Gray(255));
+                            contours = new VectorOfVectorOfPoint();
+
+                            Mat hierarchy = new Mat();
+                            CvInvoke.FindContours(thresImage, contours, hierarchy,
+                                Emgu.CV.CvEnum.RetrType.Tree, Emgu.CV.CvEnum.ChainApproxMethod.ChainApproxSimple);
+
+                            double largest = -1.0;
+                            int largeIndex = -1;
+                            // Find largest contour that is not close to any edge of the ROI
+                            for (int i = 0; i < contours.Size; i++)
+                            {
+                                double tempSize = CvInvoke.ContourArea(contours[i]);
+                                if (tempSize > largest &&
+                                    ! ContourCloseToEdge(contours[i], thresImage.Width, thresImage.Height))
+                                {
+                                    largest = tempSize;
+                                    largeIndex = i;
+                                }
+
+                            }
+
+                            if (largeIndex >= 0)
+                            {
+                                VectorOfPoint workContour = contours[largeIndex];
+                                Moments moment = CvInvoke.Moments(workContour);
+
+                                pupx = moment.M10 / moment.M00;
+                                pupy = moment.M01 / moment.M00;
+
+                                DataRow row = new DataRow
+                                {
+                                    frameID = thisFrame.FrameID,
+                                    imageTime = thisFrame.ImageTime,
+                                    pupilX = pupx + mRoiLeft,
+                                    pupilY = pupy + mRoiTop,
+                                    pupilSize = CvInvoke.ContourArea(workContour),
+                                    processTime = HighResolutionDateTime.UtcNow
+                                };
+                                mDataFile.WriteRecord(row);
+                                mDataFile.NextRecord();
+                            }
+                            else
+                            {
+                                pupx = 0;
+                                pupy = 0;
+                            }
+                        }
+                        catch
+                        {
+                            pupx = 0;
+                            pupy = 0;
+                        }
+
                         LatencyEventArgs latency = new LatencyEventArgs();
 
                         double procTime = HighResolutionDateTime.UtcNow;
@@ -350,10 +336,9 @@ namespace EyeTrackerForm
                         TimeStampTextColor, 2, Emgu.CV.CvEnum.LineType.EightConnected);
 
                     // add pupil center point
-                    /*
                     thisFrame.Image.Draw(new CircleF(new PointF((float)pupx + mRoiLeft,
                         (float)pupy + mRoiTop), 2.0f), new Gray(255), 2);
-*/
+
                     if (mRecord && thisFrame.FrameID % mTimelapseInterval == 0)
                     {
                         mTimelapseVid.Write(thisFrame.Image.Mat);
@@ -366,12 +351,8 @@ namespace EyeTrackerForm
                         if (mThreshImage)
                         {
                             displayFrame = new FrameData(thisFrame.FrameID,
-                                thisFrame.Image, Convert.ToInt32(pupx) + mRoiLeft,
-                                Convert.ToInt32(pupy) + mRoiTop);
-                            /* displayFrame = new FrameData(thisFrame.FrameID,
-                                 thresImage, Convert.ToInt32(pupx),
-                                   Convert.ToInt32(pupy));
-                            */
+                                thresImage, Convert.ToInt32(pupx),
+                                Convert.ToInt32(pupy));
                         }
                         else if (mFullImage) //mFullImage
                         {
@@ -382,11 +363,7 @@ namespace EyeTrackerForm
                         else
                         {
                             displayFrame = new FrameData(thisFrame.FrameID,
-                                thisFrame.Image, Convert.ToInt32(pupx) + mRoiLeft,
-                                Convert.ToInt32(pupy) + mRoiTop);
-                            /*displayFrame = new FrameData(thisFrame.FrameID,
                             cropImg, Convert.ToInt32(pupx), Convert.ToInt32(pupy));
-                            */
                         }
                         mDisplayQueue.Add(displayFrame);
                     }
@@ -404,9 +381,9 @@ namespace EyeTrackerForm
         {
             public double frameID { get; set; }
             public double imageTime { get; set; }
-            //public double pupilX { get; set; }
-            //public double pupilY { get; set; }
-            //public double pupilSize { get; set; }
+            public double pupilX { get; set; }
+            public double pupilY { get; set; }
+            public double pupilSize { get; set; }
             public double processTime { get; set; }
 
             //public DataRow(double frameID, double imageTime, int pupilX, int pupilSize, double processTime)
@@ -425,7 +402,7 @@ namespace EyeTrackerForm
                 //Map(m => m.pupilX).Index(2).Name("pupilX");
                 //Map(m => m.pupilY).Index(3).Name("pupilY");
                 //Map(m => m.pupilSize).Index(4).Name("pupilSize");
-                Map(m => m.processTime).Index(5).Name("processTime");
+                //Map(m => m.processTime).Index(5).Name("processTime");
 
             }
         }
@@ -450,18 +427,16 @@ namespace EyeTrackerForm
 
                         if (lockTaken)
                         {
-                           /* if (mFullImage) //mFullImage
+                            if (mFullImage) //mFullImage
                             {
                                 image.Draw(new Rectangle(mRoiLeft, mRoiTop, mRoiRight - mRoiLeft, mRoiBottom - mRoiTop), new Gray(255), 2);
-                            }*/
-                         /*   if (mRecord)
+                            }
+                            if (mRecord)
                             {
                                 image.Draw(new CircleF(new PointF(dispFrame.X, dispFrame.Y), 2.0f),
                                     new Gray(mThreshImage ? 125 : 255), 2);
-                            }*/
+                            }
                             mComponent.HandleDisplayImage(image);
-
-                            mDataFile.Flush();
 
                             if (logger.IsDebugEnabled)
                             {
@@ -598,11 +573,8 @@ namespace EyeTrackerForm
                         + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss"));
 
                     // Create Video Writers
-                    mTimelapseVid = new ImprovedVideoWriter(timelapseFilename, ImprovedVideoWriter.VideoCompressionType.H264, 50.0, (int)mCamera.Width.Value, (int)mCamera.Height.Value, true);
-                    // mTimelapseVid.MaxFileSize = 3800;
-                    // mTimelapseVid.MaxFileSize = 16000;
-                    mTimelapseVid.MaxFileSize = 50000;
-                    
+                    mTimelapseVid = new ImprovedVideoWriter(timelapseFilename, ImprovedVideoWriter.VideoCompressionType.H264, 20.0, (int)mCamera.Width.Value, (int)mCamera.Height.Value, true);
+                    mTimelapseVid.MaxFileSize = 8000;
                     //mThreshVid = new ImprovedVideoWriter(threshVidFilename, ImprovedVideoWriter.VideoCompressionType.H264,)
                     logger.Info("Pupil recodings stared on camera {5} with the following TOP, BOTTOM, LEFT, RIGHT, THRESHOLD values: {0}, {1}, {2}, {3}, {4}",
                          mRoiTop, mRoiBottom, mRoiLeft, mRoiRight, mThreshold, mCamera.DeviceSerialNumber.ToString());

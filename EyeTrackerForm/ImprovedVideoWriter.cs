@@ -85,7 +85,6 @@ namespace EyeTrackerForm
                     break;
 
             }
-            fcc = VideoWriter.Fourcc('H', '2', '6', '4');
             mFCC = fcc;
 
             //Create Video Writer
