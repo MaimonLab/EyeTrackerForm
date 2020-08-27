@@ -36,6 +36,7 @@ namespace EyeTrackerForm
         public bool mFullImage = true;
         public bool mThreshImage = false;
         public bool mRecord;
+        public bool mInitialized = false;
         public bool mDisplay;
         public Pen mPen;
         public bool mStillAlive = true;
@@ -61,6 +62,7 @@ namespace EyeTrackerForm
         ImprovedVideoWriter mTimelapseVid;
         //ImprovedVideoWriter mThreshVid;
         public int mTimelapseInterval = 300;
+        public int mDisplayInterval = 1;
         public bool mRunning = false;
         //public bool lockTaken = false;
 
@@ -151,6 +153,7 @@ namespace EyeTrackerForm
                     pupilFrame.ImageTime = imageTime;
                     image.Dispose();
                     mPupilQueue.Add(pupilFrame);
+                    logger.Debug("added {0} to pupil queue", pupilFrame.FrameID);
                 }
                 catch
                 {
@@ -241,12 +244,12 @@ namespace EyeTrackerForm
                     image = thisFrame.Image;
                     thresImage = image;
                     cropImg = image.Copy(new Rectangle(mRoiLeft, mRoiTop, mRoiRight - mRoiLeft, mRoiBottom - mRoiTop));
-                    if (mRecord)
+                    if (mRecord && mInitialized)
                     {
 
                         try
                         {
-
+                            logger.Debug("entering processing area with {0}", thisFrame.FrameID);
                             blurImag = cropImg.SmoothBlur(5, 5);
                             blurImag._EqualizeHist();
 
@@ -297,6 +300,7 @@ namespace EyeTrackerForm
                                 pupx = 0;
                                 pupy = 0;
                             }
+                            logger.Debug("finished tracking {0}", thisFrame.FrameID);
                         }
                         catch
                         {
@@ -345,7 +349,7 @@ namespace EyeTrackerForm
                         //mThreshVid.Write(thresImage.Mat);
                     }
 
-                    if (mDisplay) //mDisplay
+                    if (mDisplay && thisFrame.FrameID % mDisplayInterval == 0) //mDisplay
                     {
                         FrameData displayFrame;
                         if (mThreshImage)
@@ -366,6 +370,7 @@ namespace EyeTrackerForm
                             cropImg, Convert.ToInt32(pupx), Convert.ToInt32(pupy));
                         }
                         mDisplayQueue.Add(displayFrame);
+                        logger.Debug("added {0} to display queue", thisFrame.FrameID);
                     }
                 }
                 catch(Exception e)
@@ -558,8 +563,8 @@ namespace EyeTrackerForm
                         logger.Info($"Output directory: {vidPath}");
                     }
 
-                    // create csv file 
-                    string csvFileName = (vidPath + Path.DirectorySeparatorChar + "pupilTracking_" 
+                    // create csv file
+                    string csvFileName = (vidPath + Path.DirectorySeparatorChar + "pupilTracking_"
                             + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss") + ".csv");
 
                     writer = new StreamWriter(csvFileName);
@@ -569,7 +574,7 @@ namespace EyeTrackerForm
                     mDataFile.NextRecord();
 
                     // Create video file paths
-                    string timelapseFilename = (vidPath + Path.DirectorySeparatorChar + "timelapse_" 
+                    string timelapseFilename = (vidPath + Path.DirectorySeparatorChar + "timelapse_"
                         + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss"));
 
                     // Create Video Writers
@@ -579,6 +584,7 @@ namespace EyeTrackerForm
                     logger.Info("Pupil recodings stared on camera {5} with the following TOP, BOTTOM, LEFT, RIGHT, THRESHOLD values: {0}, {1}, {2}, {3}, {4}",
                          mRoiTop, mRoiBottom, mRoiLeft, mRoiRight, mThreshold, mCamera.DeviceSerialNumber.ToString());
 
+                    mInitialized = true;
                 }
                 else  // they pushed cancel or similar
                 {
@@ -592,6 +598,7 @@ namespace EyeTrackerForm
                     mTimelapseVid.Close();
                     mTimelapseVid = null;
                     mRunning = false;
+                    mInitialized = false;
                     page.mCohortNum.Text = "";
                     page.mRigNum.Text = "";
                     mDataFile.Flush();
