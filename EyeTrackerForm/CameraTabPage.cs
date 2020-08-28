@@ -232,11 +232,11 @@ namespace EyeTrackerForm
         {
             if (this.mFrameRateBox.InvokeRequired)
             {
-                this.mFrameRateBox.BeginInvoke((MethodInvoker)delegate () { this.mFrameRateBox.Text = e.FrameRate.ToString("0.00"); ; });
+                this.mFrameRateBox.BeginInvoke((MethodInvoker)delegate () { this.mFrameRateBox.Text = e.FrameRate.ToString("0.00 Hz"); ; });
             }
             else
             {
-                mFrameRateBox.Text = e.FrameRate.ToString("0.00");
+                mFrameRateBox.Text = e.FrameRate.ToString("0.00 Hz");
             }
         }
 
