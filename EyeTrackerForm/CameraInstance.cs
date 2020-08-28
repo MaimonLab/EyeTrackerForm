@@ -42,6 +42,8 @@ namespace EyeTrackerForm
         public double mLastFrameRateUpdate = 0;
         public double mFrameCount = 0;
         public float mFrameUpdate = 1000;
+        public int mDroppedFrames = 0;
+        public long mLastFrameID = 0;
 
         public Pen mPen;
         public bool mStillAlive = true;
@@ -61,6 +63,8 @@ namespace EyeTrackerForm
 
         public event EventHandler<LatencyEventArgs> LatencyEvent;
         public event EventHandler<FrameRateEventArgs> FrameRateEvent;
+        public event EventHandler<DroppedFrameEventArgs> DroppedFrameEvent;
+
 
         public StreamWriter writer;
         public CsvWriter mDataFile;
@@ -158,6 +162,20 @@ namespace EyeTrackerForm
                     image.Dispose();
                     mPupilQueue.Add(pupilFrame);
                     UpdateFrameRate(imageTime);
+
+                    if (mLastFrameID == 0)
+                    {
+                        mLastFrameID = pupilFrame.FrameID;
+                    }   
+                    if(pupilFrame.FrameID - mLastFrameID > 1)
+                    {
+                        mDroppedFrames += (int)(pupilFrame.FrameID - mLastFrameID);
+
+                        DroppedFrameEventArgs droppedFrameEventArgs = new DroppedFrameEventArgs();
+                        droppedFrameEventArgs.DroppedFrames = mDroppedFrames;
+                        DroppedFrameEvent(this, droppedFrameEventArgs);
+                    }
+                    mLastFrameID = pupilFrame.FrameID;
                 }
                 catch
                 {

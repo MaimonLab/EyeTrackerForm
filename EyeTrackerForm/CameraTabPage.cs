@@ -29,6 +29,7 @@ namespace EyeTrackerForm
         public Label mLatencyBox;
         public Label mRigLab, mRigNum, mCohortLab, mCohortNum;
         public Label mFrameRateLabel, mFrameRateBox;
+        public Label mDropedFrameLabel, mDroppedFrameBox;
 
 
         public CameraTabPage() : base() { }
@@ -132,11 +133,25 @@ namespace EyeTrackerForm
 
             mFrameRateBox = new Label();
             mFrameRateBox.AutoSize = true;
-            mFrameRateBox.Location = new System.Drawing.Point(80, 460);
+            mFrameRateBox.Location = new System.Drawing.Point(70, 460);
             mFrameRateBox.Name = "frameRateBox";
             mFrameRateBox.Size = new System.Drawing.Size(35, 13);
             mFrameRateBox.Text = "0";
-            
+
+
+            // dropped frame box
+            mDropedFrameLabel = new Label();
+            mDropedFrameLabel.AutoSize = true;
+            mDropedFrameLabel.Location = new System.Drawing.Point(10, 480);
+            mDropedFrameLabel.Name = "droppedFrame";
+            mDropedFrameLabel.Text = "Dropped Frames";
+
+            mDroppedFrameBox = new Label();
+            mDroppedFrameBox.Location = new System.Drawing.Point(100, 480);
+            mDroppedFrameBox.Name = "droppedFrameBox";
+            mDroppedFrameBox.Text = "0";
+            mDroppedFrameBox.AutoSize = true;
+
             
             
             // Rig and Cohort labels
@@ -145,22 +160,23 @@ namespace EyeTrackerForm
             mCohortLab = new Label();
             mCohortNum = new Label();
 
-            mRigLab.Location = new System.Drawing.Point(10, 485);
+            mRigLab.Location = new System.Drawing.Point(10, 505);
             mRigLab.Text = "Rig:";
             //mRigLab.Size = new System.Drawing.Size(35, 13);
             mRigLab.Name = "rigLabel";
             mRigLab.AutoSize = true;
 
-            mRigNum.Location = new System.Drawing.Point(40, 485);
+            mRigNum.Location = new System.Drawing.Point(40, 505);
             mRigNum.Text = "";
             //mRigNum.Size = new System.Drawing.Size(80, 20);
-            mCohortLab.Location = new System.Drawing.Point(10, 510);
+            mCohortLab.Location = new System.Drawing.Point(10, 530);
             mCohortLab.Text = "Cohort:";
             //mCohortLab.Size = new System.Drawing.Size(50, 20);
             mCohortLab.AutoSize = true;
 
-            mCohortNum.Location = new System.Drawing.Point(60, 510);
+            mCohortNum.Location = new System.Drawing.Point(60, 530);
             mCohortNum.Text = "";
+            mCohortNum.AutoSize = true;
 
 
 
@@ -178,6 +194,8 @@ namespace EyeTrackerForm
 
             this.Controls.Add(mFrameRateLabel);
             this.Controls.Add(mFrameRateBox);
+            this.Controls.Add(mDropedFrameLabel);
+            this.Controls.Add(mDroppedFrameBox);
             this.Controls.Add(mRigLab);
             this.Controls.Add(mRigNum);
             this.Controls.Add(mCohortLab);
@@ -237,6 +255,18 @@ namespace EyeTrackerForm
             else
             {
                 mFrameRateBox.Text = e.FrameRate.ToString("0.00 Hz");
+            }
+        }
+
+        public void HandleDroppedFrameEvent(object sender, DroppedFrameEventArgs e)
+        {
+            if (this.mDroppedFrameBox.InvokeRequired)
+            {
+                this.mDroppedFrameBox.BeginInvoke((MethodInvoker)delegate () { this.mDroppedFrameBox.Text = e.DroppedFrames.ToString(); ; });
+            }
+            else
+            {
+                mFrameRateBox.Text = e.DroppedFrames.ToString();
             }
         }
 
@@ -360,5 +390,9 @@ namespace EyeTrackerForm
     public class FrameRateEventArgs : EventArgs
     {
         public double FrameRate { get; set; }
+    }
+    public class DroppedFrameEventArgs : EventArgs
+    {
+        public int DroppedFrames { get; set; }
     }
 }
