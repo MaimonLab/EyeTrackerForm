@@ -53,6 +53,7 @@ namespace EyeTrackerForm
             newTab.FullImageChange += cam.FullImageChangeHandler;
             newTab.ThreshImageChange += cam.ThreshImageChangeHandler;
             cam.LatencyEvent += newTab.HandleLatencyEvent;
+            cam.FrameRateEvent += newTab.HandleFrameRateEvent;
             if (FirstCam)
             {
                 cam.Xchannel = 0;

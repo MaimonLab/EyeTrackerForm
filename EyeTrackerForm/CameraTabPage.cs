@@ -28,6 +28,7 @@ namespace EyeTrackerForm
         public Label mLatencyLabel;
         public Label mLatencyBox;
         public Label mRigLab, mRigNum, mCohortLab, mCohortNum;
+        public Label mFrameRateLabel, mFrameRateBox;
 
 
         public CameraTabPage() : base() { }
@@ -120,27 +121,45 @@ namespace EyeTrackerForm
             mLatencyBox.TabIndex = 7;
             mLatencyBox.Text = "0";
 
+
+            // framerate box
+            mFrameRateLabel = new Label();
+            mFrameRateLabel.AutoSize = true;
+            mFrameRateLabel.Location = new System.Drawing.Point(10, 460);
+            mFrameRateLabel.Name = "frameRate";
+            mFrameRateLabel.Text = "Framerate";
+
+
+            mFrameRateBox = new Label();
+            mFrameRateBox.AutoSize = true;
+            mFrameRateBox.Location = new System.Drawing.Point(80, 460);
+            mFrameRateBox.Name = "frameRateBox";
+            mFrameRateBox.Size = new System.Drawing.Size(35, 13);
+            mFrameRateBox.Text = "0";
+            
+            
+            
             // Rig and Cohort labels
             mRigLab = new Label();
             mRigNum = new Label();
             mCohortLab = new Label();
             mCohortNum = new Label();
 
-            mRigLab.Location = new System.Drawing.Point(10, 460);
+            mRigLab.Location = new System.Drawing.Point(10, 485);
             mRigLab.Text = "Rig:";
             //mRigLab.Size = new System.Drawing.Size(35, 13);
             mRigLab.Name = "rigLabel";
             mRigLab.AutoSize = true;
 
-            mRigNum.Location = new System.Drawing.Point(40, 460);
+            mRigNum.Location = new System.Drawing.Point(40, 485);
             mRigNum.Text = "";
             //mRigNum.Size = new System.Drawing.Size(80, 20);
-            mCohortLab.Location = new System.Drawing.Point(10, 485);
+            mCohortLab.Location = new System.Drawing.Point(10, 510);
             mCohortLab.Text = "Cohort:";
             //mCohortLab.Size = new System.Drawing.Size(50, 20);
             mCohortLab.AutoSize = true;
 
-            mCohortNum.Location = new System.Drawing.Point(60, 485);
+            mCohortNum.Location = new System.Drawing.Point(60, 510);
             mCohortNum.Text = "";
 
 
@@ -157,6 +176,8 @@ namespace EyeTrackerForm
             this.Controls.Add(mLatencyLabel);
             this.Controls.Add(mLatencyBox);
 
+            this.Controls.Add(mFrameRateLabel);
+            this.Controls.Add(mFrameRateBox);
             this.Controls.Add(mRigLab);
             this.Controls.Add(mRigNum);
             this.Controls.Add(mCohortLab);
@@ -199,14 +220,25 @@ namespace EyeTrackerForm
         {
             if (this.mLatencyBox.InvokeRequired)
             {
-                this.mLatencyBox.BeginInvoke((MethodInvoker)delegate () { this.mLatencyBox.Text = e.Latency.ToString(); ; });
+                this.mLatencyBox.BeginInvoke((MethodInvoker)delegate () { this.mLatencyBox.Text = e.Latency.ToString("0.000"); ; });
             }
             else
             {
-                mLatencyBox.Text = e.Latency.ToString();
+                mLatencyBox.Text = e.Latency.ToString("0.000");
             }
         }
 
+        public void HandleFrameRateEvent(object sender, FrameRateEventArgs e)
+        {
+            if (this.mFrameRateBox.InvokeRequired)
+            {
+                this.mFrameRateBox.BeginInvoke((MethodInvoker)delegate () { this.mFrameRateBox.Text = e.FrameRate.ToString("0.00"); ; });
+            }
+            else
+            {
+                mFrameRateBox.Text = e.FrameRate.ToString("0.00");
+            }
+        }
 
     }
 
@@ -325,5 +357,8 @@ namespace EyeTrackerForm
         public double Latency { get; set; }
     }
 
-
+    public class FrameRateEventArgs : EventArgs
+    {
+        public double FrameRate { get; set; }
+    }
 }

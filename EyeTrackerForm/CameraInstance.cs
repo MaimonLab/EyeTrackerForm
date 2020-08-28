@@ -33,11 +33,16 @@ namespace EyeTrackerForm
         public int mRoiLeft = 600;
         public int mRoiRight = 800;
         public int mThreshold = 200;
+
         public bool mFullImage = true;
         public bool mThreshImage = false;
         public bool mRecord;
         public bool mInitialized = false;
         public bool mDisplay;
+        public double mLastFrameRateUpdate = 0;
+        public double mFrameCount = 0;
+        public float mFrameUpdate = 1000;
+
         public Pen mPen;
         public bool mStillAlive = true;
         public double cam2sys = 0.0;
@@ -55,14 +60,15 @@ namespace EyeTrackerForm
         public string serialNumber;
 
         public event EventHandler<LatencyEventArgs> LatencyEvent;
+        public event EventHandler<FrameRateEventArgs> FrameRateEvent;
 
         public StreamWriter writer;
         public CsvWriter mDataFile;
 
         ImprovedVideoWriter mTimelapseVid;
         //ImprovedVideoWriter mThreshVid;
-        public int mTimelapseInterval = 300;
-        public int mDisplayInterval = 1;
+        public int mTimelapseInterval = int.Parse(ConfigurationManager.AppSettings["time_lapse_interval"]);
+        public int mDisplayInterval = int.Parse(ConfigurationManager.AppSettings["display_interval"]);
         public bool mRunning = false;
         //public bool lockTaken = false;
 
@@ -126,8 +132,6 @@ namespace EyeTrackerForm
         ~CameraInstance()
         {
 
-
-
         }
 
         public void DoCameraGrab()
@@ -153,7 +157,7 @@ namespace EyeTrackerForm
                     pupilFrame.ImageTime = imageTime;
                     image.Dispose();
                     mPupilQueue.Add(pupilFrame);
-                    logger.Debug("added {0} to pupil queue", pupilFrame.FrameID);
+                    UpdateFrameRate(imageTime);
                 }
                 catch
                 {
@@ -163,6 +167,24 @@ namespace EyeTrackerForm
             }
         }
 
+        public void UpdateFrameRate(double currentImageTime)
+        {
+            mFrameCount++;
+            if (mLastFrameRateUpdate == 0) //initailize 
+            {
+                mLastFrameRateUpdate = currentImageTime;
+            }
+            double timeDelta = currentImageTime - mLastFrameRateUpdate;
+            if (timeDelta > mFrameUpdate)
+            {
+                mLastFrameRateUpdate = currentImageTime;
+                FrameRateEventArgs frameRate = new FrameRateEventArgs();
+
+                frameRate.FrameRate = mFrameCount / (timeDelta / 1000);
+                mFrameCount = 0;
+                FrameRateEvent(this, frameRate);
+            }
+        }
 
 
         public void HandleImageEvent()
@@ -249,7 +271,6 @@ namespace EyeTrackerForm
 
                         try
                         {
-                            logger.Debug("entering processing area with {0}", thisFrame.FrameID);
                             blurImag = cropImg.SmoothBlur(5, 5);
                             blurImag._EqualizeHist();
 
@@ -300,7 +321,6 @@ namespace EyeTrackerForm
                                 pupx = 0;
                                 pupy = 0;
                             }
-                            logger.Debug("finished tracking {0}", thisFrame.FrameID);
                         }
                         catch
                         {
@@ -343,7 +363,7 @@ namespace EyeTrackerForm
                     thisFrame.Image.Draw(new CircleF(new PointF((float)pupx + mRoiLeft,
                         (float)pupy + mRoiTop), 2.0f), new Gray(255), 2);
 
-                    if (mRecord && thisFrame.FrameID % mTimelapseInterval == 0)
+                    if (mRecord && mInitialized && thisFrame.FrameID % mTimelapseInterval == 0)
                     {
                         mTimelapseVid.Write(thisFrame.Image.Mat);
                         //mThreshVid.Write(thresImage.Mat);
@@ -390,24 +410,18 @@ namespace EyeTrackerForm
             public double pupilY { get; set; }
             public double pupilSize { get; set; }
             public double processTime { get; set; }
-
-            //public DataRow(double frameID, double imageTime, int pupilX, int pupilSize, double processTime)
-            //{
-            //    frameID = frameID;
-
-            //}
         }
 
         public class DataRowMap : ClassMap<DataRow>
         {
             public DataRowMap()
             {
-                Map(m => m.frameID).Index(0).Name("frameID");
-                Map(m => m.imageTime).Index(1).Name("imageTime");
-                Map(m => m.pupilX).Index(2).Name("pupilX");
-                Map(m => m.pupilY).Index(3).Name("pupilY");
-                Map(m => m.pupilSize).Index(4).Name("pupilSize");
-                Map(m => m.processTime).Index(5).Name("processTime");
+                Map(m => m.frameID).Index(0).Name("frame_id");
+                Map(m => m.imageTime).Index(1).Name("image_time");
+                Map(m => m.pupilX).Index(2).Name("pupil_x");
+                Map(m => m.pupilY).Index(3).Name("pupil_y");
+                Map(m => m.pupilSize).Index(4).Name("pupil_size");
+                Map(m => m.processTime).Index(5).Name("process_time");
 
             }
         }
@@ -628,7 +642,10 @@ namespace EyeTrackerForm
         {
             mStillAlive = false;
             Thread.Sleep(100);
-            mDataFile.Flush();
+            if ( ! (mDataFile == null))
+            {
+                mDataFile.Flush();
+            }
             if (mRunning)
             {
                 mTimelapseVid.Close();
