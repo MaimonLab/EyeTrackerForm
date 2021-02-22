@@ -166,7 +166,7 @@ namespace EyeTrackerForm
                     if (mLastFrameID == 0)
                     {
                         mLastFrameID = pupilFrame.FrameID;
-                    }   
+                    }
                     if(pupilFrame.FrameID - mLastFrameID > 1)
                     {
                         mDroppedFrames += (int)(pupilFrame.FrameID - mLastFrameID);
@@ -188,7 +188,7 @@ namespace EyeTrackerForm
         public void UpdateFrameRate(double currentImageTime)
         {
             mFrameCount++;
-            if (mLastFrameRateUpdate == 0) //initailize 
+            if (mLastFrameRateUpdate == 0) //initailize
             {
                 mLastFrameRateUpdate = currentImageTime;
             }
@@ -597,7 +597,7 @@ namespace EyeTrackerForm
 
                     // create csv file
                     string csvFileName = (vidPath + Path.DirectorySeparatorChar + "pupilTracking_"
-                            + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss") + ".csv");
+                            + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_HH_mm_ss") + ".csv");
 
                     writer = new StreamWriter(csvFileName);
                     mDataFile = new CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture);
@@ -607,7 +607,7 @@ namespace EyeTrackerForm
 
                     // Create video file paths
                     string timelapseFilename = (vidPath + Path.DirectorySeparatorChar + "timelapse_"
-                        + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_hh_mm_ss"));
+                        + serialNumber + DateTime.Now.ToString("_yyyy_MM_dd_HH_mm_ss"));
 
                     // Create Video Writers
                     mTimelapseVid = new ImprovedVideoWriter(timelapseFilename, ImprovedVideoWriter.VideoCompressionType.H264, 20.0, (int)mCamera.Width.Value, (int)mCamera.Height.Value, true);
