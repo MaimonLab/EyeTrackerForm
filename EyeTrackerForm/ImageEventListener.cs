@@ -11,7 +11,7 @@ using System.Threading;
 
 namespace EyeTrackerForm
 {
-    public class ImageEventListener : ManagedImageEvent
+    public class ImageEventListener : ManagedImageEventHandler
     {
         
         private static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
