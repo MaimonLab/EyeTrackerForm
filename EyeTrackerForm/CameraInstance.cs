@@ -322,6 +322,10 @@ namespace EyeTrackerForm
                                 pupx = moment.M10 / moment.M00;
                                 pupy = moment.M01 / moment.M00;
 
+                                Gray avg_intensity;
+                                avg_intensity = image.GetAverage();
+                                
+
                                 DataRow row = new DataRow
                                 {
                                     frameID = thisFrame.FrameID,
@@ -329,7 +333,8 @@ namespace EyeTrackerForm
                                     pupilX = pupx + mRoiLeft,
                                     pupilY = pupy + mRoiTop,
                                     pupilSize = CvInvoke.ContourArea(workContour),
-                                    processTime = HighResolutionDateTime.UtcNow
+                                    processTime = HighResolutionDateTime.UtcNow,
+                                    imageIntensity = avg_intensity.Intensity
                                 };
                                 mDataFile.WriteRecord(row);
                                 mDataFile.NextRecord();
@@ -428,6 +433,7 @@ namespace EyeTrackerForm
             public double pupilY { get; set; }
             public double pupilSize { get; set; }
             public double processTime { get; set; }
+            public double imageIntensity { get; set; }
         }
 
         public class DataRowMap : ClassMap<DataRow>
@@ -440,6 +446,7 @@ namespace EyeTrackerForm
                 Map(m => m.pupilY).Index(3).Name("pupil_y");
                 Map(m => m.pupilSize).Index(4).Name("pupil_size");
                 Map(m => m.processTime).Index(5).Name("process_time");
+                Map(m => m.imageIntensity).Index(6).Name("image_intensity");
 
             }
         }
