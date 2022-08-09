@@ -3,3 +3,4 @@ EyeTrackerForm/obj/*
 EyeTrackerForm/EyeTrackerForm.csproj.user
 EyeTrackerForm/.vs/EyeTrackerForm/*
 .vs/
+.DS_store

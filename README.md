@@ -1,6 +1,8 @@
 # Eye Tracker Form
 This is a C# based tool for tracking the position of the deep pseudopupil in the *Drosophila* eye.
 
+In brief, images are captured from Flir (we use Chameleon 3 cameras, CM3-U3-13Y3M-CS) using the Flir Spinnaker API. A rectangular ROI is selected for each eye at the beginning of each experiment. This ROI is thresholded according to a user settable threshold, and smoothed using a gaussian filter. The contours are found and the largest contour not touching any edge of the ROI is chosen as the deep pseudopupil. The coordinates of the centroid of this contour, along with the image timestamp from the camera, are recorded into a csv file, and this is done for each frame of the incoming video stream.
+
 ## Usage
 You will need a FLIR camera pointed at a fly eye that is illuminated to give a good image of the deep pseudopupil.  
 
