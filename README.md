@@ -29,6 +29,8 @@ Build the project by clicking on the start button in the top center of the windo
 
 The project should now be built and you can close the new window and close Visual Studio.
 
+Sometimes Visual studio does not correctly find the .dll files for Spinnaker. If that happens, often it can be fixed by deleting and re-adding the libraries in the Visual Studio references page.
+
 ## Configuration
 
 Before running the first time, adjust the config file to match your setup and preferences.
