@@ -141,7 +141,7 @@ namespace EyeTrackerForm
         public void DoCameraGrab()
         {
 
-            while(mStillAlive)
+            while (mStillAlive)
             {
                 try
                 {
@@ -167,7 +167,7 @@ namespace EyeTrackerForm
                     {
                         mLastFrameID = pupilFrame.FrameID;
                     }
-                    if(pupilFrame.FrameID - mLastFrameID > 1)
+                    if (pupilFrame.FrameID - mLastFrameID > 1)
                     {
                         mDroppedFrames += (int)(pupilFrame.FrameID - mLastFrameID);
 
@@ -215,7 +215,7 @@ namespace EyeTrackerForm
                 {
                     image = mEventQueue.Take();
                     logger.Debug("size of event queue is {0}", mEventQueue.Count);
-                    Image<Gray, Byte> myImage = new Image<Gray, Byte>((int)image.Width,(int)image.Height, (int)image.Stride, image.DataPtr);
+                    Image<Gray, Byte> myImage = new Image<Gray, Byte>((int)image.Width, (int)image.Height, (int)image.Stride, image.DataPtr);
                     //CvInvoke.cvCopy(image.DataPtr,)
                     //Image<Gray, Byte> myImage = new Image<Gray, Byte>(image.bitmap);
                     //Image<Gray, Byte> myImage2 = new Image<Gray, Byte>(image.bitmap);
@@ -306,7 +306,7 @@ namespace EyeTrackerForm
                             {
                                 double tempSize = CvInvoke.ContourArea(contours[i]);
                                 if (tempSize > largest &&
-                                    ! ContourCloseToEdge(contours[i], thresImage.Width, thresImage.Height))
+                                    !ContourCloseToEdge(contours[i], thresImage.Width, thresImage.Height))
                                 {
                                     largest = tempSize;
                                     largeIndex = i;
@@ -345,7 +345,10 @@ namespace EyeTrackerForm
                             pupx = 0;
                             pupy = 0;
                         }
-
+                        // Calculate mcc outputs in range 0 to 10 V from edge to edge of the ROI
+                        float xval = (float)(pupx / (mRoiRight - mRoiLeft) * 10.0);
+                        float yval = (float)(pupy / (mRoiBottom - mRoiTop) * 10.0);
+                        mComponent.FireMcc(this.Xchannel, this.Ychannel, xval, yval);
                         LatencyEventArgs latency = new LatencyEventArgs();
 
                         double procTime = HighResolutionDateTime.UtcNow;
@@ -358,6 +361,7 @@ namespace EyeTrackerForm
                         {
                             logger.Debug("PupilProc Frame {0} at {1}", thisFrame.FrameID, procTime);
                         }
+                        int testc = 1;
                     }
                     else
                     {
@@ -411,7 +415,7 @@ namespace EyeTrackerForm
                         logger.Debug("added {0} to display queue", thisFrame.FrameID);
                     }
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     logger.Error("{0} \n{1}", e.Message, e.StackTrace);
                     Thread.Sleep(3);
@@ -542,9 +546,9 @@ namespace EyeTrackerForm
             }
         }
 
-        public double ConverTime (long camTime)
+        public double ConverTime(long camTime)
         {
-            return (((camTime - lastCameraTime) / cam2sys)+ lastSystemTime);
+            return (((camTime - lastCameraTime) / cam2sys) + lastSystemTime);
         }
 
 
@@ -660,7 +664,7 @@ namespace EyeTrackerForm
         {
             mStillAlive = false;
             Thread.Sleep(100);
-            if ( ! (mDataFile == null))
+            if (!(mDataFile == null))
             {
                 mDataFile.Flush();
             }
@@ -700,7 +704,7 @@ namespace EyeTrackerForm
         public int Y;
         public FrameData() { }
 
-        public FrameData(long frameId, Image<Gray, Byte> image, int x = 0, int y=0)
+        public FrameData(long frameId, Image<Gray, Byte> image, int x = 0, int y = 0)
         {
             this.FrameID = frameId;
             this.Image = image;

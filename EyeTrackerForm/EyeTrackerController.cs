@@ -8,6 +8,7 @@ using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
 using Emgu.CV;
+using MccDaq;
 using System.IO;
 
 using Emgu.CV.Structure;
@@ -20,6 +21,7 @@ namespace EyeTrackerForm
     {
         bool isLocked = false;
         static readonly object _object = new object();
+        public MccDaq.MccBoard mDaqBoard;
         public bool FirstCam = true;
         public bool MccInit = false;
 
@@ -86,7 +88,36 @@ namespace EyeTrackerForm
 
         }
 
-      
+        public void AddMCC()
+        {
+            try
+            {
+                //VOutOptions Options = VOutOptions.Default;
+                //MccDaq.ErrorInfo ULStat;
+                MccDaq.Range thisRange;
+                MccDaq.DaqDeviceManager.IgnoreInstaCal();
+                MccDaq.DaqDeviceDescriptor[] inventory = MccDaq.DaqDeviceManager.GetDaqDeviceInventory(MccDaq.DaqDeviceInterface.Any);
+                int numDevDiscovered = inventory.Length;
+                if (numDevDiscovered > 0)
+                {
+                    mDaqBoard = MccDaq.DaqDeviceManager.CreateDaqDevice(0, inventory[0]);
+                }
+                mDaqBoard.BoardConfig.GetRange(out thisRange);
+                //ULStat = mDaqBoard.VOut(0, MccDaq.Range.Uni10Volts, 2,Options);
+                mForm.toolStripStatusLabel1.Text = "MCC Device Connected.";
+                MccInit = true;
+
+
+
+            }
+            catch (ULException ule)
+            {
+                mForm.toolStripStatusLabel1.Text = "MCC Device Failed.";
+                MccInit = false;
+            }
+            
+
+        }
 
         public void HandleTabChange (object sender, EventArgs e)
         {
@@ -124,10 +155,28 @@ namespace EyeTrackerForm
             
         }
 
+        public void FireMcc ( int chan1, int chan2, float val1, float val2)
+        {
+            if (MccInit)
+            {
+                VOutOptions Options = VOutOptions.Default;
+
+                mDaqBoard.VOut(chan1, MccDaq.Range.Uni10Volts, val1, Options);
+                mDaqBoard.VOut(chan2, MccDaq.Range.Uni10Volts, val2, Options);
+            }
+        }
 
         public void Close()
         {
-             mCameraComponent.Close();
+            if (MccInit)
+            {
+                MccInit = false;
+                DaqDeviceManager.ReleaseDaqDevice(mDaqBoard);
+            }
+
+            mCameraComponent.Close();
+
+
         }
 
 

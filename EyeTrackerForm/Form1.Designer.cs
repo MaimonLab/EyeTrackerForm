@@ -36,9 +36,10 @@
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addCameraToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveCameraConfigToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.connectMCCDeviceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.panel2 = new System.Windows.Forms.Panel();
             this.imageBox1 = new Emgu.CV.UI.ImageBox();
+            this.saveCameraConfigToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
@@ -98,6 +99,7 @@
             // 
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.addCameraToolStripMenuItem,
+            this.connectMCCDeviceToolStripMenuItem,
             this.saveCameraConfigToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
@@ -107,16 +109,16 @@
             // addCameraToolStripMenuItem
             // 
             this.addCameraToolStripMenuItem.Name = "addCameraToolStripMenuItem";
-            this.addCameraToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
+            this.addCameraToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
             this.addCameraToolStripMenuItem.Text = "Add Camera";
             this.addCameraToolStripMenuItem.Click += new System.EventHandler(this.addCameraToolStripMenuItem_Click);
             // 
-            // saveCameraConfigToolStripMenuItem
+            // connectMCCDeviceToolStripMenuItem
             // 
-            this.saveCameraConfigToolStripMenuItem.Name = "saveCameraConfigToolStripMenuItem";
-            this.saveCameraConfigToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
-            this.saveCameraConfigToolStripMenuItem.Text = "Save Camera Config";
-            this.saveCameraConfigToolStripMenuItem.Click += new System.EventHandler(this.saveCameraConfigToolStripMenuItem_Click);
+            this.connectMCCDeviceToolStripMenuItem.Name = "connectMCCDeviceToolStripMenuItem";
+            this.connectMCCDeviceToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.connectMCCDeviceToolStripMenuItem.Text = "Connect MCC Device";
+            this.connectMCCDeviceToolStripMenuItem.Click += new System.EventHandler(this.connectMCCDeviceToolStripMenuItem_Click);
             // 
             // panel2
             // 
@@ -139,6 +141,13 @@
             this.imageBox1.Size = new System.Drawing.Size(711, 625);
             this.imageBox1.TabIndex = 2;
             this.imageBox1.TabStop = false;
+            // 
+            // saveCameraConfigToolStripMenuItem
+            // 
+            this.saveCameraConfigToolStripMenuItem.Name = "saveCameraConfigToolStripMenuItem";
+            this.saveCameraConfigToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.saveCameraConfigToolStripMenuItem.Text = "Save Camera Config";
+            this.saveCameraConfigToolStripMenuItem.Click += new System.EventHandler(this.saveCameraConfigToolStripMenuItem_Click);
             // 
             // Form1
             // 
@@ -174,6 +183,7 @@
         public System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addCameraToolStripMenuItem;
+        public System.Windows.Forms.ToolStripMenuItem connectMCCDeviceToolStripMenuItem;
         public Emgu.CV.UI.ImageBox imageBox1;
         public System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         private System.Windows.Forms.ToolStripMenuItem saveCameraConfigToolStripMenuItem;
